@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import citizen_router, admin_router, collector_router
+from app.services import database
 
 app = FastAPI(
     title="EWAST API",
@@ -20,6 +21,11 @@ app.add_middleware(
 app.include_router(citizen_router, prefix="/api", tags=["citizen"])
 app.include_router(admin_router, prefix="/api", tags=["admin"])
 app.include_router(collector_router, prefix="/api", tags=["collector"])
+
+# replace with migration in production
+@app.on_event("startup")
+def on_startup():
+    database.create_db_and_tables()
 
 @app.get("/")
 def root():
