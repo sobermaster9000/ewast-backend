@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import citizen_router, admin_router, collector_router
+from app.routers import user_router, route_router, report_router, barangay_router, assignment_router
 from app.services import database
 
 app = FastAPI(
@@ -18,9 +18,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(citizen_router, prefix="/api", tags=["citizen"])
-app.include_router(admin_router, prefix="/api", tags=["admin"])
-app.include_router(collector_router, prefix="/api", tags=["collector"])
+app.include_router(user_router, prefix="/api", tags=["user"])
+app.include_router(route_router, prefix="/api", tags=["route"])
+app.include_router(report_router, prefix="/api", tags=["report"])
+app.include_router(barangay_router, prefix="/api", tags=["barangay"])
+app.include_router(assignment_router, prefix="/api", tags=["assignment"])
 
 # replace with migration in production
 @app.on_event("startup")
