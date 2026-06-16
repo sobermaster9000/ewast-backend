@@ -13,10 +13,10 @@ class AssignmentBase(SQLModel):
 class Assignment(AssignmentBase, table=True):
     __tablename__: str = "assignments"
 
-    assignment_id: int = Field(primary_key=True)
-    is_started: bool = Field(default=False)
-    is_completed: bool = Field(default=False)
-    date_assigned: datetime
+    assignment_id: int | None = Field(default=None, primary_key=True)
+    is_started: bool | None = Field(default=False)
+    is_completed: bool | None = Field(default=False)
+    date_assigned: datetime | None = Field(default=None)
     date_completed: datetime | None = Field(default=None)
 
 # public assignment model to be returned in API calls
