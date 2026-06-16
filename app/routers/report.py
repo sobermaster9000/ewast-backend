@@ -43,6 +43,8 @@ async def create_report(
     form_data: ReportFormFields = Depends(ReportFormFields.as_form),
     image: UploadFile = File(...)
 ) -> ReportPublic:
+        # add authentication guards
+
         # get current user and assign id to reported_by_user_id
         reported_by_user_id = 0
 
@@ -88,8 +90,10 @@ async def create_report(
 
 @router.get("/reports/summary")
 def get_reports_summary(session: SessionDependency):
+    # add authentication guards
     ...
 
 @router.get("/reports/summary/{barangay_id}")
 def get_reports_summary_barangay(barangay_id: int, session: SessionDependency):
+    # add authentication guards
     ...
