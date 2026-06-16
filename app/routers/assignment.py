@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, status
 from typing import Annotated
 
 from sqlmodel import select
@@ -27,7 +27,7 @@ def get_assignments_collector(collector_id: int, session: SessionDependency) -> 
     reports = session.exec(select(Assignment).where(Assignment.assigned_to_user_id == collector_id)).all()
     return reports
 
-@router.post("/assignments/create", response_model=AssignmentPublic)
+@router.post("/assignments/create", response_model=AssignmentPublic, status_code=status.HTTP_201_CREATED)
 def create_assignment(assignment_create: AssignmentCreate, session: SessionDependency) -> AssignmentPublic:
     # add authentication guards
     assignment_create = AssignmentCreate.model_validate(assignment_create)
