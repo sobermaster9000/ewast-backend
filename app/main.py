@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.routers import user_router, route_router, report_router, barangay_router, assignment_router
 from app.services import database
 
@@ -8,6 +9,9 @@ app = FastAPI(
     description="Backend service for EWAST (InnovCup 2026 Entry)",
     version="1.0.0"
 )
+
+# probably change to file storage server in production
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # allow React app to fetch data
 app.add_middleware(
