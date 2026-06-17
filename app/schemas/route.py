@@ -12,7 +12,7 @@ class RouteBase(SQLModel):
 class Route(RouteBase, table=True):
     __tablename__: str = "routes"
 
-    route_id: int = Field(primary_key=True)
+    route_id: int | None = Field(default=None, primary_key=True)
     is_approved: bool = Field(default=False)
     date_approved: datetime
 
