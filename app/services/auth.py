@@ -1,10 +1,12 @@
 import os
 import hashlib
+import secrets
 from datetime import datetime, timedelta
 
 import jwt
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 
 from sqlmodel import select
@@ -17,6 +19,8 @@ ITERATIONS = 694200
 SECRET_SIGNATURE = "6308733e506b23bcb530d80642be4498798e5c99cec972b78816f27c38a0fb777018bd06c951e19dbb3b2ec1e1056408248da9d51b15d4a4a3af0d4dc3fe4d80"
 TOKEN_EXPIRY_HOURS = 24
 
+token_security = HTTPBearer()
+
 def hash_password(password: str) -> str:
     salt_bytes = os.urandom(16)
     hash_bytes = hashlib.pbkdf2_hmac(
@@ -27,44 +31,59 @@ def hash_password(password: str) -> str:
     )
     return f"{salt_bytes.hex()}:{hash_bytes.hex()}"
 
-def validate_credentials(email: str, password: str, session: SessionDependency) -> tuple[bool, str]:
+def get_token_from_credentials(email: str, password: str, session: SessionDependency) -> str:
     user = session.exec(select(User).where(User.email == email)).first()
     if not user:
-        return False, "Email is not associated with any user"
+        raise HTTPException(status_code=400, detail="Email is not associated with a user")
 
     stored_password_hash = user.password_hash
 
     salt, hash = stored_password_hash.split(":")
     salt_bytes, hash_bytes = bytes.fromhex(salt), bytes.fromhex(hash)
-    password_hash = hashlib.pbkdf2_hmac(
+    new_hash_bytes = hashlib.pbkdf2_hmac(
         "sha256",
         password.encode("utf-8"),
         salt_bytes,
         ITERATIONS
     )
 
-    correct_password = password_hash == hash_bytes
+    if not secrets.compare_digest(hash_bytes, new_hash_bytes):
+        raise HTTPException(status_code=400, detail="Incorrect password")
 
-    if not correct_password:
-        return False, "Incorrect password"
-
-    return True, "Credentials are valid"
-
-def get_token(email: str) -> str:
     payload = {
         "email": email,
-        "expiry": (datetime.utcnow() + timedelta(hours=TOKEN_EXPIRY_HOURS)).timestamp()
+        "creation": datetime.utcnow().timestamp()
     }
-    encoded_jwt = jwt.encode(payload, SECRET_SIGNATURE, algorithm="HS256")
-    return encoded_jwt
+    token = jwt.encode(payload, SECRET_SIGNATURE, algorithm="HS256")
 
-# returns User object if token is not expired, else returns None
-def get_user(token: str, session: SessionDependency) -> User | None:
+    return token
+
+def get_user_from_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(token_security)], session: SessionDependency) -> User:
+    token = credentials.credentials
     payload = jwt.decode(token, SECRET_SIGNATURE, algorithms=["HS256"])
-    expiry = datetime.fromtimestamp(payload["expiry"])
-    if datetime.utcnow() >= expiry:
-        return None
-    user = session.exec(select(User).where(User.email == payload["email"])).first()
+    email, creation = payload.get("email"), payload.get("creation")
+
+    if email is None or creation is None:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    if datetime.utcnow() >= datetime.fromtimestamp(creation) + timedelta(hours=TOKEN_EXPIRY_HOURS):
+        raise HTTPException(status_code=401, detail="Access token is invalid")
+
+    user = session.exec(select(User).where(User.email == email)).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Could not get user from token")
+
+    if creation <= user.reject_tokens_before_timestamp:
+        raise HTTPException(status_code=401, detail="Access token is invalid")
+
     return user
 
-CurrentUser = Annotated[User | None, Depends(get_user)]
+def update_token_rejection_timestamp(user: User, session: SessionDependency) -> None:
+    user_data = user.model_dump()
+    user_data["reject_tokens_before_timestamp"] = datetime.utcnow().timestamp()
+    user.sqlmodel_update(user_data)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+CurrentUser = Annotated[User, Depends(get_user_from_token)]

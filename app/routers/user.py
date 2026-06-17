@@ -8,6 +8,7 @@ from sqlmodel import select
 
 from app.schemas import Role, UserBase, User, UserPublic, UserCreate, UserLogin
 from app.services.database import SessionDependency
+from app.services import auth
 
 router = APIRouter()
 
@@ -42,13 +43,16 @@ def signup_user(user_create: UserCreate, session: SessionDependency) -> UserPubl
     if not password_valid:
         raise HTTPException(status_code=422, detail="Password must be at least 8 characters long and have at least one of all the following: lowercase letter, uppercase letter, number, special character")
 
+    password_hash = auth.hash_password(user_create.password)
+
     user = User(
         firstname=user_create.firstname,
         lastname=user_create.lastname,
         email=user_create.email,
         role=user_create.role,
-        password_hash="mock hash", # hash passwords properly according to the specifications of the authentication service
-        date_created=datetime.utcnow()
+        password_hash=password_hash,
+        date_created=datetime.utcnow(),
+        reject_tokens_before_timestamp=datetime.utcnow().timestamp()
     )
 
     session.add(user)
@@ -56,13 +60,19 @@ def signup_user(user_create: UserCreate, session: SessionDependency) -> UserPubl
     session.refresh(user)
     return user
 
-# the remaining endpoints need that authentication service to be available first
+@router.post("/users/login", response_model=None)
+def login_user(user_login: UserLogin, session: SessionDependency):
+    user_login = UserLogin.model_validate(user_login)
+    token = auth.get_token_from_credentials(user_login.email, user_login.password, session)
+    return {
+        "access_token" : token,
+        "token_type": "Bearer"
+    }
 
-@router.post("/users/login")
-def login_user(session: SessionDependency):
-    ...
-
-@router.post("/users/logout")
-def logout_user(session: SessionDependency):
-    # add authentication guards
-    ...
+# frontend must also delete stored token
+@router.post("/users/logout", response_model=None)
+def logout_user(current_user: auth.CurrentUser, session: SessionDependency):
+    auth.update_token_rejection_timestamp(current_user, session)
+    return {
+        "detail": "Successfully logged out"
+    }

@@ -24,8 +24,7 @@ class User(UserBase, table=True):
     user_id: int | None = Field(default=None, primary_key=True)
     password_hash: str
     date_created: datetime
-    token: str | None = Field(default=None)
-    token_expiry: datetime | None = Field(default=None)
+    reject_tokens_before_timestamp: float # tokens created before this timestamp will be invalidated
 
 # public user model to be returned in API calls
 class UserPublic(UserBase):
@@ -44,6 +43,9 @@ class UserCreate(BaseModel):
     # password_confirm: str = Field(max_length=100)
 
 # user model for logins
-class UserLogin(SQLModel):
-    email: str = Field(max_length=100)
-    password: str = Field(max_length=100)
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+# class UserLogin(SQLModel):
+#     email: str = Field(max_length=100)
+#     password: str = Field(max_length=100)
