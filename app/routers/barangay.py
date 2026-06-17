@@ -3,8 +3,9 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import BarangayBase, Barangay, BarangayPublic, BarangayCreate
+from app.schemas import BarangayBase, Barangay, BarangayPublic, BarangayCreate, Role
 from app.services.database import SessionDependency
+from app.services import auth
 
 router = APIRouter()
 
@@ -21,8 +22,9 @@ def get_barangay(barangay_id: int, session: SessionDependency) -> BarangayPublic
     return barangay
 
 @router.post("/barangays/create", response_model=BarangayPublic, status_code=status.HTTP_201_CREATED)
-def create_barangay(barangay_create: BarangayCreate, session: SessionDependency) -> BarangayPublic:
-    # add authentication guards
+def create_barangay(barangay_create: BarangayCreate, current_user: auth.CurrentUser, session: SessionDependency) -> BarangayPublic:
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin role required")
     barangay_create = BarangayCreate.model_validate(barangay_create)
     barangay = Barangay(
         name=barangay_create.name,
