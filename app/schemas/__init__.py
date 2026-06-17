@@ -1,4 +1,4 @@
-from .user import User, Role
+from .user import Role, UserBase, User, UserPublic, UserCreate, UserLogin
 from .report import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields
 from .route import Route
 from .barangay import BarangayBase, Barangay, BarangayPublic, BarangayCreate

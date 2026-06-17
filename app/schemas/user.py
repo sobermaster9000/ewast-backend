@@ -1,4 +1,4 @@
-# from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from enum import Enum
 
@@ -21,7 +21,7 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     __tablename__: str = "users"
 
-    user_id: int = Field(primary_key=True)
+    user_id: int | None = Field(default=None, primary_key=True)
     password_hash: str
     date_created: datetime
     token: str | None = Field(default=None)
@@ -32,8 +32,16 @@ class UserPublic(UserBase):
     pass
 
 # user model for instantiation from JSON input
-class UserCreate(UserBase):
-    pass
+class UserCreate(BaseModel):
+    firstname: str
+    lastname: str
+    email: EmailStr
+    password: str
+    password_confirm: str
+    role: Role
+# class UserCreate(UserBase):
+    # password: str = Field(max_length=100)
+    # password_confirm: str = Field(max_length=100)
 
 # user model for logins
 class UserLogin(SQLModel):
