@@ -29,8 +29,8 @@ def get_report(report_id: int, session: SessionDependency) -> ReportPublic:
     return report
 
 @router.get("/reports/user/{user_id}", response_model=list[ReportPublic])
-def get_reports_from_user(user_id: int, session: SessionDependency) -> list[ReportPublic]:
-    reports = session.exec(select(Report).where(Report.reported_by_user_id == user_id)).all()
+def get_reports_from_user(user_id: int, session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[ReportPublic]:
+    reports = session.exec(select(Report).where(Report.reported_by_user_id == user_id).offset(offset).limit(limit)).all()
     return reports
 
 @router.get("/reports/types", response_model=list[str])

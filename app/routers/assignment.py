@@ -23,8 +23,8 @@ def get_assignment(assignment_id: int, session: SessionDependency) -> Assignment
     return assignment
 
 @router.get("/assignments/collector/{collector_id}", response_model=list[AssignmentPublic])
-def get_assignments_collector(collector_id: int, session: SessionDependency) -> list[AssignmentPublic]:
-    reports = session.exec(select(Assignment).where(Assignment.assigned_to_user_id == collector_id)).all()
+def get_assignments_collector(collector_id: int, session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[AssignmentPublic]:
+    reports = session.exec(select(Assignment).where(Assignment.assigned_to_user_id == collector_id).offset(offset).limit(limit)).all()
     return reports
 
 @router.post("/assignments/create", response_model=AssignmentPublic, status_code=status.HTTP_201_CREATED)
