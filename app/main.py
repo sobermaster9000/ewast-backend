@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routers import user_router, route_router, report_router, barangay_router, assignment_router
 from app.services import database
+from app.config import settings
 import os
 
 app = FastAPI(
-    title="EWAST API",
-    description="Backend service for EWAST (InnovCup 2026 Entry)",
-    version="1.0.0"
+    title=settings.PROJECT_NAME,
+    description=settings.DESCRIPTION,
+    version=settings.VERSION
 )
 
 # change to file storage server in productiom
@@ -38,4 +39,4 @@ def on_startup():
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to EWAST API"}
+    return {"detail": f"Welcome to {settings.PROJECT_NAME}. {settings.DESCRIPTION}. Version {settings.VERSION}"}

@@ -2,13 +2,15 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    ENVIRONMENT: str = "development"
-    PROJECT_NAME: str = "EWAST API"
+    ENVIRONMENT: str
+    PROJECT_NAME: str
+    DESCRIPTION: str
+    VERSION: str
 
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
+    DATABASE_URL: str
+    DATABASE_KEY: str
 
-    GEMINI_API_KEY: str
+    AI_API_KEY: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
