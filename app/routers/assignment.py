@@ -5,8 +5,9 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate
+from app.schemas import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate, Role
 from app.services.database import SessionDependency
+from app.services import auth
 
 router = APIRouter()
 
@@ -28,8 +29,9 @@ def get_assignments_collector(collector_id: int, session: SessionDependency, off
     return reports
 
 @router.post("/assignments/create", response_model=AssignmentPublic, status_code=status.HTTP_201_CREATED)
-def create_assignment(assignment_create: AssignmentCreate, session: SessionDependency) -> AssignmentPublic:
-    # add authentication guards
+def create_assignment(assignment_create: AssignmentCreate, current_user: auth.CurrentUser, session: SessionDependency) -> AssignmentPublic:
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin role required")
     assignment_create = AssignmentCreate.model_validate(assignment_create)
     assignment = Assignment(
         assigned_to_user_id=assignment_create.assigned_to_user_id,
@@ -42,8 +44,9 @@ def create_assignment(assignment_create: AssignmentCreate, session: SessionDepen
     return assignment
 
 @router.get("/assignments/accept/{assignment_id}", response_model=AssignmentPublic)
-def accept_assignment(assignment_id: int, session: SessionDependency) -> AssignmentPublic:
-    # add authentication guards
+def accept_assignment(assignment_id: int, current_user: auth.CurrentUser, session: SessionDependency) -> AssignmentPublic:
+    if current_user.role != Role.COLLECTOR:
+        raise HTTPException(status_code=403, detail="Collector role required")
     assignment = session.get(Assignment, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
@@ -56,8 +59,9 @@ def accept_assignment(assignment_id: int, session: SessionDependency) -> Assignm
     return assignment
 
 @router.get("/assignments/complete/{assignment_id}", response_model=AssignmentPublic)
-def complete_assignment(assignment_id: int, session: SessionDependency) -> AssignmentPublic:
-    # add authentication guards
+def complete_assignment(assignment_id: int, current_user: auth.CurrentUser, session: SessionDependency) -> AssignmentPublic:
+    if current_user.role != Role.COLLECTOR:
+        raise HTTPException(status_code=403, detail="Collector role required")
     assignment = session.get(Assignment, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
