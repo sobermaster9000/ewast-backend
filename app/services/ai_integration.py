@@ -60,7 +60,7 @@ def analyze_garbage_report(report_type: ReportType, report_notes: str | None = N
     if report_notes:
         prompt += (
             "You will be given some notes on the report, which was annotated by a citizen. You may use these notes to further supplement your analysis. "
-            "Here are the report notes, make sure to translate any Tagalog, Bisaya, or any other Filipino dialect to English first before parsing the full notes:"
+            "Here are the report notes, which may contain Tagalog, Bisaya, or any other Filipino dialect, which you are to read and comprehend regardless of the dialect:"
             f"{report_notes}"
         )
 
