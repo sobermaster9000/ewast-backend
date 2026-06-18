@@ -6,8 +6,9 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role
 from app.services.database import SessionDependency
+from app.services import auth
 
 router = APIRouter()
 
@@ -39,14 +40,17 @@ def get_report_types() -> list[str]:
 
 @router.post("/reports/create", response_model=ReportPublic, status_code=status.HTTP_201_CREATED)
 async def create_report(
+    current_user: auth.CurrentUser,
     session: SessionDependency,
     form_data: ReportFormFields = Depends(ReportFormFields.as_form),
     image: UploadFile = File(...)
 ) -> ReportPublic:
-        # add authentication guards
+        if current_user.role != Role.CITIZEN:
+            raise HTTPException(status_code=403, detail="Citizen role is required")
 
-        # get current user and assign id to reported_by_user_id
-        reported_by_user_id = 0
+        reported_by_user_id = current_user.user_id
+        if not reported_by_user_id:
+            raise HTTPException(status_code=500, detail="An error occured while trying to get user id")
 
         # change to storage server in production
         upload_dir = "static/uploads"
@@ -89,11 +93,15 @@ async def create_report(
 # the remaining endpoints need the ai integration service to be available first
 
 @router.get("/reports/summary")
-def get_reports_summary(session: SessionDependency):
-    # add authentication guards
+def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependency):
+    ### uncomment if restricted to admin only ###
+    # if current_user.role != Role.ADMIN:
+    #     raise HTTPException(status_code=403, detail="Admin role required")
     ...
 
 @router.get("/reports/summary/{barangay_id}")
-def get_reports_summary_barangay(barangay_id: int, session: SessionDependency):
-    # add authentication guards
+def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency):
+    ### uncomment if restricted to admin only ###
+    # if current_user.role != Role.ADMIN:
+    #     raise HTTPException(status_code=403, detail="Admin role required")
     ...
