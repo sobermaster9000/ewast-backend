@@ -2,7 +2,7 @@ import base64
 import requests
 import json
 
-from fastapi import HTTPException
+# from fastapi import HTTPException
 
 from sqlmodel import Session
 
@@ -17,6 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# move this to .env file in production
 OPENROUTER_API_KEY = "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"
 
 def analyze_garbage_report(report_type: ReportType, report_notes: str | None = None, report_image_url: str | None = None) -> str:
@@ -83,7 +84,7 @@ def analyze_garbage_report(report_type: ReportType, report_notes: str | None = N
             }
         })
 
-    # payload = {
+    # {
     #     "model": "nex-agi/nex-n2-pro:free",
     #     "messages": [
     #         {
@@ -135,3 +136,11 @@ def process_ai_report_analysis(report_id: int) -> None:
             session.commit()
         except Exception as error:
             logger.fatal(f"An error occured while processing the AI report analysis: {error}")
+
+def barangay_report_analysis(barangay_id: int):
+    with Session(db_engine) as session:
+        ...
+
+def general_report_analysis():
+    with Session(db_engine) as session:
+        ...

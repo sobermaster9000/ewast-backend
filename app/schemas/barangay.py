@@ -13,10 +13,12 @@ class Barangay(BarangayBase, table=True):
     __tablename__: str = "barangays"
 
     barangay_id: int | None = Field(default=None, primary_key=True)
+    ai_summary: str | None = Field(default=None)
 
 # public barangay model to be returned in API calls
 class BarangayPublic(BarangayBase):
     barangay_id: int
+    ai_summary: str | None
 
 # barangay class for instantiation with JSON input
 class BarangayCreate(BarangayBase):
