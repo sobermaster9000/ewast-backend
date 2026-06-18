@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status, BackgroundTasks
 from typing import Annotated
 
 from sqlmodel import select
@@ -9,6 +9,7 @@ from sqlmodel import select
 from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role
 from app.services.database import SessionDependency
 from app.services import auth
+from app.services import ai_integration
 
 router = APIRouter()
 
@@ -42,6 +43,7 @@ def get_report_types() -> list[str]:
 async def create_report(
     current_user: auth.CurrentUser,
     session: SessionDependency,
+    background_tasks: BackgroundTasks,
     form_data: ReportFormFields = Depends(ReportFormFields.as_form),
     image: UploadFile = File(...)
 ) -> ReportPublic:
@@ -61,16 +63,13 @@ async def create_report(
         file_path = os.path.join(upload_dir, unique_filename)
 
         try:
-             contents = await image.read()
-             with open(file_path, "wb") as f:
-                 f.write(contents)
+            contents = await image.read()
+            with open(file_path, "wb") as f:
+                f.write(contents)
         except Exception:
-             raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
+            raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
         finally:
-             await image.close()
-
-        # update when ai integration service is available
-        mock_ai_summary = "Skibidi sigma AI summary"
+            await image.close()
 
         report = Report(
             type=form_data.type,
@@ -78,9 +77,8 @@ async def create_report(
             latitude=form_data.latitude,
             longitude=form_data.longitude,
             reported_by_user_id=reported_by_user_id,
-            image_url=f"/static/uploads/{unique_filename}",
+            image_url=f"static/uploads/{unique_filename}",
             is_collected=False,
-            ai_summary=mock_ai_summary,
             date_reported=datetime.utcnow()
         )
 
@@ -88,9 +86,13 @@ async def create_report(
         session.commit()
         session.refresh(report)
 
-        return report
+        if report.report_id:
+            background_tasks.add_task(
+                func=ai_integration.process_ai_report_analysis,
+                report_id=report.report_id
+            )
 
-# the remaining endpoints need the ai integration service to be available first
+        return report
 
 @router.get("/reports/summary")
 def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependency):

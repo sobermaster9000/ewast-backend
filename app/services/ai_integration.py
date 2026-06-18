@@ -13,7 +13,7 @@ import logging
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - $(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def analyze_garbage_report(report_type: ReportType, report_notes: str | None = N
                 image_encoded_string = base64.b64encode(file.read()).decode("utf-8")
         except:
             # raise HTTPException(status_code=500, detail="Failed to read image for AI analysis")
-            raise Exception("Failed to read image for AI analysis")
+            raise Exception(f"Failed to read image {report_image_url} for AI analysis")
 
         image_data_url = f"data:image/jpeg;base64;{image_encoded_string}"
 
@@ -64,7 +64,7 @@ def analyze_garbage_report(report_type: ReportType, report_notes: str | None = N
             f"{report_notes}"
         )
 
-    payload["messages"]["content"].append({
+    payload["messages"][0]["content"].append({
         "type": "text",
         "text": prompt
     })
@@ -75,8 +75,8 @@ def analyze_garbage_report(report_type: ReportType, report_notes: str | None = N
             "If the provided image is not an image of uncollected garbage, state that in your output."
         )
 
-        payload["messages"]["content"][0]["text"] = prompt
-        payload["messages"]["content"].append({
+        payload["messages"][0]["content"][0]["text"] = prompt
+        payload["messages"][0]["content"].append({
             "type": "image_url",
             "imageUrl": {
                 "url": image_data_url
@@ -118,7 +118,7 @@ def analyze_garbage_report(report_type: ReportType, report_notes: str | None = N
         raise Exception(f"OpenRouter gateway error: {response.text}")
 
     result = response.json()
-    logger.info(f"OpenRouter response: {result}")
+    # logger.info(f"OpenRouter response: {result}")
     ai_summary = result["choices"][0]["message"]["content"]
 
     return ai_summary
@@ -134,4 +134,4 @@ def process_ai_report_analysis(report_id: int) -> None:
             session.add(report)
             session.commit()
         except Exception as error:
-            logger.fatal(f"An error occured while process the AI report analysis: {error}")
+            logger.fatal(f"An error occured while processing the AI report analysis: {error}")
