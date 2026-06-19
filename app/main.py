@@ -35,7 +35,7 @@ app.include_router(assignment_router, prefix="/api", tags=["assignment"])
 # replace with migration in production
 @app.on_event("startup")
 def on_startup():
-    database.create_db_and_tables()
+    database.init_db_and_tables()
 
 @app.get("/")
 def root():

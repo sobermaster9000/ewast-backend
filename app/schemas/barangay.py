@@ -5,7 +5,7 @@ from sqlalchemy import Column, JSON
 
 # base barangay class
 class BarangayBase(SQLModel):
-    name: str = Field(max_length=100)
+    name: str = Field(unique=True, index=True, max_length=100)
     bounds_coords: list[tuple[float, float]] = Field(sa_column=Column(JSON, nullable=False, default=[]))
 
 # standard barangay class to be stored in database
