@@ -41,6 +41,8 @@ def get_barangay_id_of_report(report: Report) -> int:
     with Session(db_engine) as session:
         barangays = session.exec(select(Barangay)).all()
         for barangay in barangays:
+            if len(barangay.bounds_coords) < 3:
+                continue
             polygon_coords = [(long, lat) for lat, long in barangay.bounds_coords]
             barangay_polygon = Polygon(polygon_coords)
             if barangay_polygon.contains(report_point) and barangay.barangay_id:
