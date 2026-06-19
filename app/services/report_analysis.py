@@ -21,6 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # move this to .env file in production
+OPENROUTER_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
 OPENROUTER_API_KEY = "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"
 
 def get_barangay_report_analysis(barangay_id: int) -> str:
@@ -135,7 +136,7 @@ You must return a raw, syntactically valid JSON object matching the schema below
 }}"""
 
     payload = {
-        "model": "nex-agi/nex-n2-pro:free",
+        "model": OPENROUTER_MODEL,
         "messages": [
             {
                 "role": "user",
@@ -157,27 +158,6 @@ You must return a raw, syntactically valid JSON object matching the schema below
             }
         })
         logger.info("Image data url is present, appending to payload...")
-
-    # {
-    #     "model": "nex-agi/nex-n2-pro:free",
-    #     "messages": [
-    #         {
-    #             "role": "user",
-    #             "content": [
-    #                 {
-    #                     "type": "text",
-    #                     "text": prompt
-    #                 },
-    #                 {
-    #                     "type": "image_url",
-    #                     "imageUrl": {
-    #                         "url": image_data_url
-    #                     }
-    #                 }
-    #             ]
-    #         }
-    #     ]
-    # }
 
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",

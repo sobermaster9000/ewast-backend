@@ -18,7 +18,6 @@ class Barangay(BarangayBase, table=True):
 # public barangay model to be returned in API calls
 class BarangayPublic(BarangayBase):
     barangay_id: int
-    ai_summary: str | None
 
 # barangay class for instantiation with JSON input
 class BarangayCreate(BarangayBase):
