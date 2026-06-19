@@ -9,6 +9,8 @@ from sqlmodel import Session, select
 from app.schemas import ReportType, Report, Barangay, Summary
 from app.services.database import db_engine
 
+from shapely.geometry import Point, Polygon
+
 import logging
 
 logging.basicConfig(
@@ -34,28 +36,18 @@ def get_general_report_analysis() -> str:
             raise Exception("Cannot generate summary")
         return summary.general_summary if summary.general_summary else ""
 
-def update_barangay_analysis(barangay_id: int, updated_analysis: str):
-    with Session(db_engine) as session:
-        barangay = session.get(Barangay, barangay_id)
-        if barangay:
-            barangay.ai_summary = updated_analysis
-            session.add(barangay)
-            session.commit()
-
-def update_overall_analysis(updated_analysis: str):
-    with Session(db_engine) as session:
-        summary = session.exec(select(Summary)).first()
-        if not summary:
-            summary = Summary()
-        summary.general_summary = updated_analysis
-        session.add(summary)
-        session.commit()
-
 def get_barangay_id_of_report(report: Report) -> int:
-    # incorporate shapely library
-    return 0
+    report_point = Point(report.longitude, report.latitude)
+    with Session(db_engine) as session:
+        barangays = session.exec(select(Barangay)).all()
+        for barangay in barangays:
+            polygon_coords = [(long, lat) for lat, long in barangay.bounds_coords]
+            barangay_polygon = Polygon(polygon_coords)
+            if barangay_polygon.contains(report_point) and barangay.barangay_id:
+                return barangay.barangay_id
+        return 0
 
-def analyze_garbage_report(report: Report) -> str:
+def analyze_garbage_report(report: Report) -> dict[str, str | int]:
     report_type = report.type
     report_notes = report.notes
     report_image_url = report.image_url
@@ -196,16 +188,9 @@ You must return a raw, syntactically valid JSON object matching the schema below
     except:
         raise Exception("Could not parse AI report analysis")
 
-    if analysis.get("updated_barangay_analysis") and barangay_id > 0:
-        update_barangay_analysis(barangay_id, analysis["updated_barangay_analysis"])
+    analysis["barangay_id"] = barangay_id
 
-    if analysis.get("updated_overall_analysis"):
-        update_overall_analysis(analysis["updated_overall_analysis"])
-
-    if not analysis.get("report_analysis"):
-        raise Exception("Could not prase AI report analysis")
-
-    return analysis["report_analysis"]
+    return analysis
 
 # this function calls the previous function and is designed to be
 # run as a backgorund task in order to be non-blocking for report uploads
@@ -214,10 +199,30 @@ def process_ai_report_analysis(report_id: int) -> None:
         report = session.get(Report, report_id)
         if not report:
             return
+
         try:
             analysis = analyze_garbage_report(report)
-            report.ai_summary = analysis
+
+            # update immediate barangay report analysis
+            if isinstance(analysis.get("updated_barangay_analysis"), str) and isinstance(analysis.get("barangay_id"), int):
+                barangay = session.get(Barangay, analysis["barangay_id"])
+                if barangay:
+                    barangay.ai_summary = analysis["updated_barangay_analysis"]
+                    session.add(barangay)
+                    session.commit()
+
+            # update overall report analysis
+            if isinstance(analysis.get("updated_overall_analysis"), str):
+                summary = session.exec(select(Summary)).first()
+                if not summary:
+                    summary = Summary()
+                summary.general_summary = analysis["updated_overall_analysis"]
+                session.add(summary)
+                session.commit()
+
+            report.ai_summary = analysis["report_analysis"]
             session.add(report)
             session.commit()
+
         except Exception as error:
             logger.fatal(f"An error occured while processing the AI report analysis: {error}")
