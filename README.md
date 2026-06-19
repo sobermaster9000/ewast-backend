@@ -1,9 +1,14 @@
 # ewast-backend
 
-Create virtual environment first (recommended)
+This repository included the code for the backend service used by EWAST, our entry for the AWS Innovation Cup - Mindanao 2026 hackathon.
 
-Install required Python packages with `pip install -r requirements.txt`
+## How to run locally
 
-Start backend locally with `uvicorn app.main:app --reload`
+Before proceeding, it is recommended to first create a virtual environment using the `venv` Python module.
 
-Always remember to not commit environment files (`.env` files)
+- Install the required packages via `pip install -r requirements`
+- Start the backend locally using `uvicorn app.main:app --reload`
+
+## Data attribution
+
+- **Davao City Barangay Boundaries** - © Christian Blanquera, geoph. Source: https://github.com/OSSPhilippines/geoph
