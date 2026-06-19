@@ -9,7 +9,7 @@ from sqlmodel import select
 from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role
 from app.services.database import SessionDependency
 from app.services import auth
-from app.services import ai_integration
+from app.services import report_analysis
 
 router = APIRouter()
 
@@ -88,22 +88,35 @@ async def create_report(
 
         if report.report_id:
             background_tasks.add_task(
-                func=ai_integration.process_ai_report_analysis,
+                func=report_analysis.process_ai_report_analysis,
                 report_id=report.report_id
             )
 
         return report
 
-@router.get("/reports/summary")
+@router.get("/reports/general/summary")
 def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependency):
     ### uncomment if restricted to admin only ###
     # if current_user.role != Role.ADMIN:
     #     raise HTTPException(status_code=403, detail="Admin role required")
-    ...
+    try:
+        general_summary = report_analysis.get_general_report_analysis()
+        return {
+            "general_summary": general_summary
+        }
+    except:
+        raise HTTPException(status_code=400, detail="An error occured while trying to get the general summary")
 
-@router.get("/reports/summary/{barangay_id}")
+@router.get("/reports/summary/barangay/{barangay_id}", response_model=None)
 def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency):
     ### uncomment if restricted to admin only ###
     # if current_user.role != Role.ADMIN:
     #     raise HTTPException(status_code=403, detail="Admin role required")
-    ...
+    try:
+        barangay_summary = report_analysis.get_barangay_report_analysis(barangay_id)
+        return {
+            "barangay_id": barangay_id,
+            "barangay_summary": barangay_summary
+        }
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=f"An error occured while trying to get the barangay summary: {error}")

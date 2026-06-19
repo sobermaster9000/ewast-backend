@@ -1,6 +1,7 @@
 import base64
 import requests
 import json
+import os
 
 from fastapi import HTTPException
 
@@ -33,7 +34,10 @@ def get_general_report_analysis() -> str:
     with Session(db_engine) as session:
         summary = session.exec(select(Summary)).first()
         if not summary:
-            raise Exception("Cannot generate summary")
+            summary = Summary()
+            session.add(summary)
+            session.commit()
+            session.refresh(summary)
         return summary.general_summary if summary.general_summary else ""
 
 def get_barangay_id_of_report(report: Report) -> int:
@@ -47,7 +51,7 @@ def get_barangay_id_of_report(report: Report) -> int:
             barangay_polygon = Polygon(polygon_coords)
             if barangay_polygon.contains(report_point) and barangay.barangay_id:
                 return barangay.barangay_id
-        return 0
+    return 0
 
 def analyze_garbage_report(report: Report) -> dict[str, str | int]:
     report_type = report.type
@@ -64,19 +68,29 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
         try:
             with open(report_image_url, "rb") as file:
                 image_encoded_string = base64.b64encode(file.read()).decode("utf-8")
+            file_extension = os.path.splitext(report_image_url)[1][1:]
+            image_data_url = f"data:image/{file_extension};base64,{image_encoded_string}"
+            logger.info(f"Image encoded into url with .{file_extension} file extension and {len(image_encoded_string)} characters encoded")
         except:
             # raise HTTPException(status_code=500, detail="Failed to read image for AI analysis")
             raise Exception(f"Failed to read image {report_image_url} for AI analysis")
-
-        image_data_url = f"data:image/jpeg;base64;{image_encoded_string}"
 
     if not report_notes:
         report_notes = ""
 
     barangay_id = get_barangay_id_of_report(report)
 
-    barangay_analysis = get_barangay_report_analysis(barangay_id)
-    overall_analysis = get_general_report_analysis()
+    barangay_analysis = ""
+    try:
+        barangay_analysis = get_barangay_report_analysis(barangay_id)
+    except Exception as error:
+        logger.warning(f"Could not retrieve barangay analysis of barangay with id {barangay_id}\nError: {error}")
+
+    overall_analysis = ""
+    try:
+        overall_analysis = get_general_report_analysis()
+    except Exception as error:
+        logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
 
     prompt = f"""\
 You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage and sequentially update rolling contextual summaries for its corresponding Barangay (neighborhood) and the City-wide Overall system.
@@ -138,10 +152,11 @@ You must return a raw, syntactically valid JSON object matching the schema below
     if image_data_url:
         payload["messages"][0]["content"].append({
             "type": "image_url",
-            "imageUrl": {
+            "image_url": {
                 "url": image_data_url
             }
         })
+        logger.info("Image data url is present, appending to payload...")
 
     # {
     #     "model": "nex-agi/nex-n2-pro:free",
@@ -209,22 +224,33 @@ def process_ai_report_analysis(report_id: int) -> None:
             if isinstance(analysis.get("updated_barangay_analysis"), str) and isinstance(analysis.get("barangay_id"), int):
                 barangay = session.get(Barangay, analysis["barangay_id"])
                 if barangay:
+                    logger.info(f"Barangay with ID {analysis["barangay_id"]} found, proceeding with analysis update...")
                     barangay.ai_summary = analysis["updated_barangay_analysis"]
                     session.add(barangay)
                     session.commit()
+                    logger.info(f"Completed analysis update of barangay with ID {analysis["barangay_id"]}")
+                else:
+                    logger.warning(f"Barangay with id {analysis["barangay_id"]} not found, skipping analysis update...")
+            else:
+                logger.warning("Updated barangay analysis data seems to be malformed, skipping analysis update entirely...")
 
             # update overall report analysis
             if isinstance(analysis.get("updated_overall_analysis"), str):
                 summary = session.exec(select(Summary)).first()
                 if not summary:
+                    logger.info("Overall summary not initialized yet, proceeding with initialization...")
                     summary = Summary()
                 summary.general_summary = analysis["updated_overall_analysis"]
                 session.add(summary)
                 session.commit()
+                logger.info("Completed analysis update of overall report analysis")
+            else:
+                logger.warning("Updated overall analysis data seems to be malformed, skipping analysis update entirely...")
 
             report.ai_summary = analysis["report_analysis"]
             session.add(report)
             session.commit()
+            logger.info(f"Finished processing analysis of report with ID {report_id}")
 
         except Exception as error:
             logger.fatal(f"An error occured while processing the AI report analysis: {error}")
