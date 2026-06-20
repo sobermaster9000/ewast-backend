@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics
 from app.services.database import SessionDependency
 from app.services import auth
 from app.services import report_analysis
@@ -96,22 +96,22 @@ def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependen
     except:
         raise HTTPException(status_code=400, detail="An error occured while trying to get the general summary")
 
-@router.get("/reports/stats", response_model=None)
-def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency):
+@router.get("/reports/stats", response_model=Statistics)
+def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency) -> Statistics:
     report_count = report_analysis.get_report_count()
     report_density = report_analysis.get_report_density()
-    barangays_w_most_reports = report_analysis.get_barangays_with_most_reports()
+    barangays_with_most_reports = report_analysis.get_barangays_with_most_reports()
     report_type_freq = report_analysis.get_report_type_freq()
     report_themes = report_analysis.get_report_themes()
 
-    stats = {
-        "report_count": report_count,
-        "report_density": report_density,
-        "barangays_w_most_reports": barangays_w_most_reports,
-        "report_type_freq": report_type_freq,
-        "report_themes": report_themes,
-        "barangay_stats": []
-    }
+    stats = Statistics(
+        report_count=report_count,
+        report_density=report_density,
+        barangays_with_most_reports=barangays_with_most_reports,
+        report_type_freq=report_type_freq,
+        report_themes=report_themes,
+        barangay_stats=[]
+    )
 
     barangays = session.exec(select(Barangay)).all()
     for barangay in barangays:
@@ -119,14 +119,14 @@ def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency)
         barangay_report_density = report_analysis.get_report_density(barangay.barangay_id)
         barangay_report_type_freq = report_analysis.get_report_type_freq(barangay.barangay_id)
         barangay_report_themes = report_analysis.get_report_themes(barangay.barangay_id)
-        barangay_stats = {
-            "barangay_name": barangay.name,
-            "report_count": barangay_report_count,
-            "report_density": barangay_report_density,
-            "report_type_freq": barangay_report_type_freq,
-            "report_themes": barangay_report_themes
-        }
-        stats["barangay_stats"].append(barangay_stats)
+        barangay_stats = BarangayStatistics(
+            barangay_name=barangay.name,
+            report_count=barangay_report_count,
+            report_density=barangay_report_density,
+            report_type_freq=barangay_report_type_freq,
+            report_themes=barangay_report_themes
+        )
+        stats.barangay_stats.append(barangay_stats)
 
     return stats
 
@@ -156,6 +156,20 @@ def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUse
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"An error occured while trying to get the barangay summary: {error}")
 
-@router.get("/reports/stats/barangay/{barangay_id}", response_model=None)
-def get_barangay_report_stats(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency):
-    ...
+@router.get("/reports/stats/barangay/{barangay_id}", response_model=BarangayStatistics)
+def get_barangay_report_stats(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency) -> BarangayStatistics:
+    barangay = session.get(Barangay, barangay_id)
+    if not barangay:
+        raise HTTPException(status_code=404, detail=f"Could not find barangay with ID {barangay_id}")
+    report_count = report_analysis.get_report_count(barangay_id)
+    report_density = report_analysis.get_report_density(barangay_id)
+    report_type_freq = report_analysis.get_report_type_freq(barangay_id)
+    report_themes = report_analysis.get_report_themes(barangay_id)
+    stats = BarangayStatistics(
+        barangay_name=barangay.name,
+        report_count=report_count,
+        report_density=report_density,
+        report_type_freq=report_type_freq,
+        report_themes=report_themes
+    )
+    return stats

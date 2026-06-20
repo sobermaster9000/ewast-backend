@@ -4,3 +4,4 @@ from .route import RouteBase, Route, RoutePublic, RouteCreate
 from .barangay import BarangayBase, Barangay, BarangayPublic, BarangayCreate
 from .assignment import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate
 from .summary import Summary
+from .statistics import ReportCount, ReportTypeFreq, BarangayStatistics, Statistics

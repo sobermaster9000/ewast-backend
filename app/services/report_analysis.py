@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlmodel import Session, select, text
 
-from app.schemas import ReportType, Report, Barangay, Summary
+from app.schemas import ReportType, Report, Barangay, Summary, ReportCount
 from app.services.database import db_engine
 from app.config import settings
 
@@ -48,14 +48,21 @@ def get_report_density(barangay_id: int = 0) -> float:
 
         return round(report_count / area_sq_meters, 3)
 
-def get_barangays_with_most_reports() -> list[dict[str, Any]]:
+def get_barangays_with_most_reports() -> list[ReportCount]:
     with Session(db_engine) as session:
-        query = text("""SELECT b.name as barangay_name, COUNT(r.under_barangay_id) as report_count
+        query = text("""SELECT b.name as barangay_name, COUNT(r.under_barangay_id) as count
             FROM reports r JOIN barangays b ON b.barangay_id = r.under_barangay_id
-            GROUP BY b.barangay_id, b.name ORDER BY report_count DESC LIMIT 10""")
+            GROUP BY b.barangay_id, b.name ORDER BY count DESC LIMIT 10""")
         result = session.execute(query)
         rows = result.fetchall()
-        return [row._asdict() for row in rows]
+        report_counts = []
+        for row in rows:
+            row_dict = row._asdict()
+            report_counts.append(ReportCount(
+                barangay_name=row_dict["barangay_name"],
+                count=row_dict["count"]
+            ))
+        return report_counts
 
 def get_report_type_freq(barangay_id: int = 0) -> list[dict[str, Any]]:
     with Session(db_engine) as session:
