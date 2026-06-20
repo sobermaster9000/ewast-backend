@@ -14,13 +14,13 @@ class ReportTypeFreq(BaseModel):
 class BarangayStatistics(BaseModel):
     barangay_name: str
     report_count: int
-    report_density: float
+    report_density_sq_m: float
     report_type_freq: list[ReportTypeFreq]
     report_themes: list[str]
 
 class Statistics(BaseModel):
     report_count: int
-    report_density: float
+    report_density_sq_m: float
     barangays_with_most_reports: list[ReportCount]
     report_type_freq: list[ReportTypeFreq]
     report_themes: list[str]
