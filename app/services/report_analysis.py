@@ -26,7 +26,7 @@ def get_report_count(barangay_id: int = 0) -> dict[str, Any]:
     with Session(db_engine) as session:
         query = text("SELECT COUNT(*) as report_count FROM reports")
         if barangay_id:
-            query = text("SELECT COUNT(*) as report_count FROM report WHERE barangay_id = :barangay_id")
+            query = text("SELECT COUNT(*) as report_count FROM report WHERE under_barangay_id = :barangay_id")
         result = session.execute(query, {"barangay_id": barangay_id})
         return result.fetchone()._asdict()
 
