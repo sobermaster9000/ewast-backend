@@ -33,7 +33,7 @@ def get_report_count(barangay_id: int = 0) -> dict[str, Any]:
 def get_report_density(barangay_id: int = 0) -> float:
     return 0
 
-def get_densest_barangays() -> list[dict[str, Any]]:
+def get_barangays_with_most_reports() -> list[dict[str, Any]]:
     with Session(db_engine) as session:
         query = text("""SELECT b.name as barangay_name, COUNT(reports.under_barangay_id) as report_count
             FROM reports r JOIN barangays b ON b.barangay_id = r.under_barangay_id

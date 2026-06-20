@@ -126,7 +126,7 @@ def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUse
 def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency):
     report_count = report_analysis.get_report_count()
     report_density = report_analysis.get_report_density()
-    densest_barangays = report_analysis.get_densest_barangays()
+    densest_barangays = report_analysis.get_barangays_with_most_reports()
     report_type_freq = report_analysis.get_report_type_freq()
     report_themes = report_analysis.get_report_themes()
 
