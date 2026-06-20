@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlmodel import Session, select, text
 
-from app.schemas import ReportType, Report, Barangay, Summary, ReportCount
+from app.schemas import ReportType, Report, Barangay, Summary, ReportCount, ReportTypeFreq
 from app.services.database import db_engine
 from app.config import settings
 
@@ -64,7 +64,7 @@ def get_barangays_with_most_reports() -> list[ReportCount]:
             ))
         return report_counts
 
-def get_report_type_freq(barangay_id: int = 0) -> list[dict[str, Any]]:
+def get_report_type_freq(barangay_id: int = 0) -> list[ReportTypeFreq]:
     with Session(db_engine) as session:
         query = text("SELECT type as report_type, COUNT(type) as count FROM reports GROUP BY type")
         if barangay_id:
@@ -75,7 +75,14 @@ def get_report_type_freq(barangay_id: int = 0) -> list[dict[str, Any]]:
         else:
             result = session.execute(query)
         rows = result.fetchall()
-        return [row._asdict() for row in rows]
+        report_type_freqs = []
+        for row in rows:
+            row_dict = row._asdict()
+            report_type_freqs.append(ReportTypeFreq(
+                report_type=row_dict["report_type"],
+                count=row_dict["count"]
+            ))
+        return report_type_freqs
 
 def get_report_themes(barangay_id: int = 0) -> list[str]:
     return ["dummy"]

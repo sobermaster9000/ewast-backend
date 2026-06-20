@@ -106,7 +106,7 @@ def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency)
 
     stats = Statistics(
         report_count=report_count,
-        report_density=report_density,
+        report_density_sq_m=report_density,
         barangays_with_most_reports=barangays_with_most_reports,
         report_type_freq=report_type_freq,
         report_themes=report_themes,
@@ -122,7 +122,7 @@ def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency)
         barangay_stats = BarangayStatistics(
             barangay_name=barangay.name,
             report_count=barangay_report_count,
-            report_density=barangay_report_density,
+            report_density_sq_m=barangay_report_density,
             report_type_freq=barangay_report_type_freq,
             report_themes=barangay_report_themes
         )
@@ -168,7 +168,7 @@ def get_barangay_report_stats(barangay_id: int, current_user: auth.CurrentUser, 
     stats = BarangayStatistics(
         barangay_name=barangay.name,
         report_count=report_count,
-        report_density=report_density,
+        report_density_sq_m=report_density,
         report_type_freq=report_type_freq,
         report_themes=report_themes
     )
