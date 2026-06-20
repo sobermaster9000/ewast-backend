@@ -43,7 +43,17 @@ def get_densest_barangays() -> list[dict[str, Any]]:
         return [row._asdict() for row in rows]
 
 def get_report_type_freq(barangay_id: int = 0) -> list[dict[str, Any]]:
-    return [{"report_type": "dummy", "freq": 0}]
+    with Session(db_engine) as session:
+        query = text("SELECT type as report_type, COUNT(type) as count FROM reports GROUP BY type")
+        if barangay_id:
+            query = text("SELECT type as report_type, COUNT(type) as count FROM reports WHERE under_barangay_id = :barangay_id GROUP BY type")
+        result = None
+        if barangay_id:
+            result = session.execute(query, {"barangay_id": barangay_id})
+        else:
+            result = session.execute(query)
+        rows = result.fetchall()
+        return [row._asdict() for row in rows]
 
 def get_report_themes(barangay_id: int = 0) -> list[str]:
     return ["dummy"]
