@@ -23,17 +23,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def get_report_count(barangay_id: int = 0) -> dict[str, Any]:
+def get_report_count(barangay_id: int = 0) -> int:
     with Session(db_engine) as session:
         query = text("SELECT COUNT(*) as report_count FROM reports")
         if barangay_id:
-            query = text("SELECT COUNT(*) as report_count FROM report WHERE under_barangay_id = :barangay_id")
+            query = text("SELECT COUNT(*) as report_count FROM reports WHERE under_barangay_id = :barangay_id")
         result = session.execute(query, {"barangay_id": barangay_id})
-        return result.fetchone()._asdict()
+        return result.fetchone()._asdict()["report_count"]
 
 def get_report_density(barangay_id: int = 0) -> float:
     with Session(db_engine) as session:
-        report_count = get_report_count(barangay_id)["report_count"]
+        report_count = get_report_count(barangay_id)
 
         area_sq_meters = 2_443_610_000
         if barangay_id:
@@ -46,11 +46,11 @@ def get_report_density(barangay_id: int = 0) -> float:
             raw_area, _ = geod.geometry_area_perimeter(polygon)
             area_sq_meters = abs(raw_area)
 
-        return report_count / area_sq_meters
+        return round(report_count / area_sq_meters, 3)
 
 def get_barangays_with_most_reports() -> list[dict[str, Any]]:
     with Session(db_engine) as session:
-        query = text("""SELECT b.name as barangay_name, COUNT(reports.under_barangay_id) as report_count
+        query = text("""SELECT b.name as barangay_name, COUNT(r.under_barangay_id) as report_count
             FROM reports r JOIN barangays b ON b.barangay_id = r.under_barangay_id
             GROUP BY b.barangay_id, b.name ORDER BY report_count DESC LIMIT 10""")
         result = session.execute(query)
