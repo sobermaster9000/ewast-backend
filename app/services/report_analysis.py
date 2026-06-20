@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 
 from app.schemas import ReportType, Report, Barangay, Summary
 from app.services.database import db_engine
+from app.config import settings
 
 from shapely.geometry import Point, Polygon
 
@@ -19,10 +20,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-# move this to .env file in production
-OPENROUTER_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
-OPENROUTER_API_KEY = "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"
 
 def get_barangay_report_analysis(barangay_id: int) -> str:
     with Session(db_engine) as session:
@@ -136,7 +133,7 @@ You must return a raw, syntactically valid JSON object matching the schema below
 }}"""
 
     payload = {
-        "model": OPENROUTER_MODEL,
+        "model": settings.OPENROUTER_MODEL,
         "messages": [
             {
                 "role": "user",
@@ -160,9 +157,9 @@ You must return a raw, syntactically valid JSON object matching the schema below
         logger.info("Image data url is present, appending to payload...")
 
     response = requests.post(
-        url="https://openrouter.ai/api/v1/chat/completions",
+        url=settings.OPENROUTER_API_ENDPOINT,
         headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
             "Content-Type": "application/json"
         },
         data=json.dumps(payload)

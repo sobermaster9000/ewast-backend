@@ -13,11 +13,7 @@ from sqlmodel import select
 
 from app.schemas import User
 from .database import SessionDependency
-
-# move to .env file in production
-ITERATIONS = 694200
-SECRET_SIGNATURE = "6308733e506b23bcb530d80642be4498798e5c99cec972b78816f27c38a0fb777018bd06c951e19dbb3b2ec1e1056408248da9d51b15d4a4a3af0d4dc3fe4d80"
-TOKEN_EXPIRY_HOURS = 24
+from app.config import settings
 
 token_security = HTTPBearer()
 
@@ -27,7 +23,7 @@ def hash_password(password: str) -> str:
         "sha256",
         password.encode("utf-8"),
         salt_bytes,
-        ITERATIONS
+        settings.HASHING_ITERATIONS
     )
     return f"{salt_bytes.hex()}:{hash_bytes.hex()}"
 
@@ -44,7 +40,7 @@ def get_token_from_credentials(email: str, password: str, session: SessionDepend
         "sha256",
         password.encode("utf-8"),
         salt_bytes,
-        ITERATIONS
+        settings.HASHING_ITERATIONS
     )
 
     if not secrets.compare_digest(hash_bytes, new_hash_bytes):
@@ -54,19 +50,19 @@ def get_token_from_credentials(email: str, password: str, session: SessionDepend
         "email": email,
         "creation": datetime.utcnow().timestamp()
     }
-    token = jwt.encode(payload, SECRET_SIGNATURE, algorithm="HS256")
+    token = jwt.encode(payload, settings.JWT_SIGNATURE, algorithm="HS256")
 
     return token
 
 def get_user_from_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(token_security)], session: SessionDependency) -> User:
     token = credentials.credentials
-    payload = jwt.decode(token, SECRET_SIGNATURE, algorithms=["HS256"])
+    payload = jwt.decode(token, settings.JWT_SIGNATURE, algorithms=["HS256"])
     email, creation = payload.get("email"), payload.get("creation")
 
     if email is None or creation is None:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-    if datetime.utcnow() >= datetime.fromtimestamp(creation) + timedelta(hours=TOKEN_EXPIRY_HOURS):
+    if datetime.utcnow() >= datetime.fromtimestamp(creation) + timedelta(hours=settings.TOKEN_EXPIRY_HOURS):
         raise HTTPException(status_code=401, detail="Access token is invalid")
 
     user = session.exec(select(User).where(User.email == email)).first()
