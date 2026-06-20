@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status, BackgroundTasks
 from typing import Annotated
 
-from sqlmodel import select, text
+from sqlmodel import select
 
 from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay
 from app.services.database import SessionDependency

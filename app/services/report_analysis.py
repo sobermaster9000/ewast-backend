@@ -4,8 +4,9 @@ import json
 import os
 
 from fastapi import HTTPException
+from typing import Any
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 
 from app.schemas import ReportType, Report, Barangay, Summary
 from app.services.database import db_engine
@@ -20,6 +21,26 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+def get_report_count(barangay_id: int = 0) -> dict[str, Any]:
+    with Session(db_engine) as session:
+        query = text("SELECT COUNT(*) as report_count FROM reports")
+        if barangay_id:
+            query = text("SELECT COUNT(*) as report_count FROM report WHERE barangay_id = :barangay_id")
+        result = session.execute(query, {"barangay_id": barangay_id})
+        return result.fetchone()._asdict()
+
+def get_report_density(barangay_id: int = 0) -> float:
+    return 0
+
+def get_densest_barangays() -> list[dict[str, Any]]:
+    return [{"barangay_name": "dummyname", "report_count": 0}]
+
+def get_report_type_freq(barangay_id: int = 0) -> list[dict[str, Any]]:
+    return [{"report_type": "dummy", "freq": 0}]
+
+def get_report_themes(barangay_id: int = 0) -> list[str]:
+    return ["dummy"]
 
 def get_barangay_report_analysis(barangay_id: int) -> str:
     with Session(db_engine) as session:
