@@ -13,6 +13,7 @@ from app.services.database import db_engine
 from app.config import settings
 
 from shapely.geometry import Point, Polygon
+from pyproj import Geod
 
 import logging
 
@@ -31,7 +32,21 @@ def get_report_count(barangay_id: int = 0) -> dict[str, Any]:
         return result.fetchone()._asdict()
 
 def get_report_density(barangay_id: int = 0) -> float:
-    return 0
+    with Session(db_engine) as session:
+        report_count = get_report_count(barangay_id)["report_count"]
+
+        area_sq_meters = 2_443_610_000
+        if barangay_id:
+            barangay = session.get(Barangay, barangay_id)
+            if not barangay:
+                return 0
+            coords = [(long, lat) for lat, long in barangay.bounds_coords]
+            polygon = Polygon(coords)
+            geod = Geod(ellps="WGS84")
+            raw_area, _ = geod.geometry_area_perimeter(polygon)
+            area_sq_meters = abs(raw_area)
+
+        return report_count / area_sq_meters
 
 def get_barangays_with_most_reports() -> list[dict[str, Any]]:
     with Session(db_engine) as session:
