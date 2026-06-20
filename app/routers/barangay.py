@@ -21,16 +21,16 @@ def get_barangay(barangay_id: int, session: SessionDependency) -> BarangayPublic
         raise HTTPException(status_code=404, detail="Barangay not found")
     return barangay
 
-@router.post("/barangays/create", response_model=BarangayPublic, status_code=status.HTTP_201_CREATED)
-def create_barangay(barangay_create: BarangayCreate, current_user: auth.CurrentUser, session: SessionDependency) -> BarangayPublic:
-    if current_user.role != Role.ADMIN:
-        raise HTTPException(status_code=403, detail="Admin role required")
-    barangay_create = BarangayCreate.model_validate(barangay_create)
-    barangay = Barangay(
-        name=barangay_create.name,
-        bounds_coords=barangay_create.bounds_coords
-    )
-    session.add(barangay)
-    session.commit()
-    session.refresh(barangay)
-    return barangay
+# @router.post("/barangays/create", response_model=BarangayPublic, status_code=status.HTTP_201_CREATED)
+# def create_barangay(barangay_create: BarangayCreate, current_user: auth.CurrentUser, session: SessionDependency) -> BarangayPublic:
+#     if current_user.role != Role.ADMIN:
+#         raise HTTPException(status_code=403, detail="Admin role required")
+#     barangay_create = BarangayCreate.model_validate(barangay_create)
+#     barangay = Barangay(
+#         name=barangay_create.name,
+#         bounds_coords=barangay_create.bounds_coords
+#     )
+#     session.add(barangay)
+#     session.commit()
+#     session.refresh(barangay)
+#     return barangay

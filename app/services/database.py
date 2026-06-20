@@ -53,11 +53,13 @@ def init_db_and_tables():
                 logger.warning(f"No JSON read from {file.name}, skipping...")
                 continue
 
+            barangay_id = int(barangay_json["properties"]["barangay_id"])
             barangay_name = barangay_json["properties"]["barangay_name"]
             barangay_bounds = [(lat, long) for long, lat in barangay_json["geometry"]["coordinates"][0][0]]
             barangay = session.exec(select(Barangay).where(Barangay.name == barangay_name)).first()
             if not barangay:
                 barangay = Barangay(
+                    barangay_id=barangay_id,
                     name=barangay_name,
                     bounds_coords=barangay_bounds
                 )
