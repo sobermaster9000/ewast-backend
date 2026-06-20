@@ -4,9 +4,9 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status, BackgroundTasks
 from typing import Annotated
 
-from sqlmodel import select
+from sqlmodel import select, text
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay
 from app.services.database import SessionDependency
 from app.services import auth
 from app.services import report_analysis
@@ -121,3 +121,31 @@ def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUse
         }
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"An error occured while trying to get the barangay summary: {error}")
+
+@router.get("/reports/stats", response_model=None)
+def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency):
+    report_count = report_analysis.get_report_count()
+    report_density = report_analysis.get_report_density()
+    densest_barangays = report_analysis.get_densest_barangays()
+    report_type_freq = report_analysis.get_report_type_freq()
+    report_themes = report_analysis.get_report_themes()
+
+    stats = {
+        "report_count": report_count,
+        "report_density": report_density,
+        "densest_barangays": densest_barangays,
+        "report_type_freq": report_type_freq,
+        "report_themes": report_themes,
+        "barangay_stats": []
+    }
+
+    barangays = session.exec(select(Barangay)).all()
+    for barangay in barangays:
+        barangay_stats = report_analysis.get_barangay_report_stats(barangay.barangay_id)
+        stats["barangay_stats"].append(barangay_stats)
+
+    return stats
+
+@router.get("/reports/stats/barangay/{barangay_id}", response_model=None)
+def get_barangay_report_stats(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency):
+    ...
