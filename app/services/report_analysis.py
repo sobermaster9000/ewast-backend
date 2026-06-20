@@ -34,7 +34,13 @@ def get_report_density(barangay_id: int = 0) -> float:
     return 0
 
 def get_densest_barangays() -> list[dict[str, Any]]:
-    return [{"barangay_name": "dummyname", "report_count": 0}]
+    with Session(db_engine) as session:
+        query = text("""SELECT b.name as barangay_name, COUNT(reports.under_barangay_id) as report_count
+            FROM reports r JOIN barangays b ON b.barangay_id = r.under_barangay_id
+            GROUP BY b.barangay_id, b.name ORDER BY report_count DESC LIMIT 10""")
+        result = session.execute(query)
+        rows = result.fetchall()
+        return [row._asdict() for row in rows]
 
 def get_report_type_freq(barangay_id: int = 0) -> list[dict[str, Any]]:
     return [{"report_type": "dummy", "freq": 0}]
