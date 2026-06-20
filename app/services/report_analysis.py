@@ -38,8 +38,8 @@ def get_general_report_analysis() -> str:
             session.refresh(summary)
         return summary.general_summary if summary.general_summary else ""
 
-def get_barangay_id_of_report(report: Report) -> int:
-    report_point = Point(report.longitude, report.latitude)
+def get_barangay_id_of_loc(latitude: float, longitude: float) -> int:
+    report_point = Point(longitude, latitude)
     with Session(db_engine) as session:
         barangays = session.exec(select(Barangay)).all()
         for barangay in barangays:
@@ -76,7 +76,7 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
     if not report_notes:
         report_notes = ""
 
-    barangay_id = get_barangay_id_of_report(report)
+    barangay_id = report.under_barangay_id
 
     barangay_analysis = ""
     try:

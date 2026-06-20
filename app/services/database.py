@@ -55,7 +55,7 @@ def init_db_and_tables():
 
             barangay_id = int(barangay_json["properties"]["barangay_id"])
             barangay_name = barangay_json["properties"]["barangay_name"]
-            barangay_bounds = [(lat, long) for long, lat in barangay_json["geometry"]["coordinates"][0][0]]
+            barangay_bounds = [(lat, long) for long, lat in barangay_json["geometry"]["coordinates"][0][0][1:]]
             barangay = session.exec(select(Barangay).where(Barangay.name == barangay_name)).first()
             if not barangay:
                 barangay = Barangay(

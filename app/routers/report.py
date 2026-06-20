@@ -47,52 +47,53 @@ async def create_report(
     form_data: ReportFormFields = Depends(ReportFormFields.as_form),
     image: UploadFile = File(...)
 ) -> ReportPublic:
-        if current_user.role != Role.CITIZEN:
-            raise HTTPException(status_code=403, detail="Citizen role is required")
+    if current_user.role != Role.CITIZEN:
+        raise HTTPException(status_code=403, detail="Citizen role required")
 
-        reported_by_user_id = current_user.user_id
-        if not reported_by_user_id:
-            raise HTTPException(status_code=500, detail="An error occured while trying to get user id")
+    reported_by_user_id = current_user.user_id
+    if not reported_by_user_id:
+        raise HTTPException(status_code=500, detail="An error occured while trying to get user ID")
 
-        # change to storage server in production
-        upload_dir = "static/uploads"
-        os.makedirs(upload_dir, exist_ok=True)
+    # change to storage server in production
+    upload_dir = "static/uploads"
+    os.makedirs(upload_dir, exist_ok=True)
 
-        file_extension = os.path.splitext(image.filename)[1]
-        unique_filename = f"{int(datetime.utcnow().timestamp())}{file_extension}"
-        file_path = os.path.join(upload_dir, unique_filename)
+    file_extension = os.path.splitext(image.filename)[1]
+    unique_filename = f"{int(datetime.utcnow().timestamp())}{file_extension}"
+    file_path = os.path.join(upload_dir, unique_filename)
 
-        try:
-            contents = await image.read()
-            with open(file_path, "wb") as f:
-                f.write(contents)
-        except Exception:
-            raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
-        finally:
-            await image.close()
+    try:
+        contents = await image.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
+    finally:
+        await image.close()
 
-        report = Report(
-            type=form_data.type,
-            notes=form_data.notes,
-            latitude=form_data.latitude,
-            longitude=form_data.longitude,
-            reported_by_user_id=reported_by_user_id,
-            image_url=f"static/uploads/{unique_filename}",
-            is_collected=False,
-            date_reported=datetime.utcnow()
+    report = Report(
+        type=form_data.type,
+        notes=form_data.notes,
+        latitude=form_data.latitude,
+        longitude=form_data.longitude,
+        reported_by_user_id=reported_by_user_id,
+        under_barangay_id=report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude),
+        image_url=f"static/uploads/{unique_filename}",
+        is_collected=False,
+        date_reported=datetime.utcnow()
+    )
+
+    session.add(report)
+    session.commit()
+    session.refresh(report)
+
+    if report.report_id:
+        background_tasks.add_task(
+            func=report_analysis.process_ai_report_analysis,
+            report_id=report.report_id
         )
 
-        session.add(report)
-        session.commit()
-        session.refresh(report)
-
-        if report.report_id:
-            background_tasks.add_task(
-                func=report_analysis.process_ai_report_analysis,
-                report_id=report.report_id
-            )
-
-        return report
+    return report
 
 @router.get("/reports/general/summary")
 def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependency):
