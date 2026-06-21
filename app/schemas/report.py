@@ -25,7 +25,7 @@ class Report(ReportBase, table=True):
 
     report_id: int | None = Field(default=None, primary_key=True)
     image_url: str | None = Field(default=None, max_length=1000)
-    ai_summary: str | None = Field(default=None)
+    report_summary: str | None = Field(default=None)
     reported_by_user_id: int # manually verify that this exists in `users` table
     under_barangay_id: int
     is_collected: bool = Field(default=False)
@@ -35,7 +35,7 @@ class Report(ReportBase, table=True):
 class ReportPublic(ReportBase):
     report_id: int
     image_url: str | None = Field(default=None, max_length=1000)
-    ai_summary: str | None = Field(default=None)
+    report_summary: str | None = Field(default=None)
     reported_by_user_id: int # manually verify that this exists in `users` table
     under_barangay_id: int
     is_collected: bool = Field(default=False)

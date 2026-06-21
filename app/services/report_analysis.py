@@ -92,7 +92,7 @@ def get_barangay_report_analysis(barangay_id: int) -> str:
         barangay = session.get(Barangay, barangay_id)
         if not barangay:
             raise Exception("Barangay not found")
-        return barangay.ai_summary if barangay.ai_summary else ""
+        return barangay.report_summary if barangay.report_summary else ""
 
 def get_general_report_analysis() -> str:
     with Session(db_engine) as session:
@@ -278,7 +278,7 @@ def process_ai_report_analysis(report_id: int) -> None:
                 barangay = session.get(Barangay, analysis["barangay_id"])
                 if barangay:
                     logger.info(f"Barangay with ID {analysis["barangay_id"]} found, proceeding with analysis update...")
-                    barangay.ai_summary = analysis["updated_barangay_analysis"]
+                    barangay.report_summary = analysis["updated_barangay_analysis"]
                     session.add(barangay)
                     session.commit()
                     logger.info(f"Completed analysis update of barangay with ID {analysis["barangay_id"]}")
@@ -300,7 +300,7 @@ def process_ai_report_analysis(report_id: int) -> None:
             else:
                 logger.warning("Updated overall analysis data seems to be malformed, skipping analysis update entirely...")
 
-            report.ai_summary = analysis["report_analysis"]
+            report.report_summary = analysis["report_analysis"]
             session.add(report)
             session.commit()
             logger.info(f"Finished processing analysis of report with ID {report_id}")
