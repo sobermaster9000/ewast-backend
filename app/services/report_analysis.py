@@ -91,18 +91,35 @@ def get_barangay_report_analysis(barangay_id: int) -> str:
     with Session(db_engine) as session:
         barangay = session.get(Barangay, barangay_id)
         if not barangay:
-            raise Exception("Barangay not found")
+            raise Exception(f"Barangay with ID {barangay_id} not found")
         return barangay.report_summary if barangay.report_summary else ""
 
 def get_general_report_analysis() -> str:
     with Session(db_engine) as session:
         summary = session.exec(select(Summary)).first()
         if not summary:
-            summary = Summary()
+            summary = Summary(general_themes=[])
             session.add(summary)
             session.commit()
             session.refresh(summary)
         return summary.general_summary if summary.general_summary else ""
+
+def get_barangay_themes(barangay_id: int) -> list[str]:
+    with Session(db_engine) as session:
+        barangay = session.get(Barangay, barangay_id)
+        if not barangay:
+            raise Exception(f"Barangay with ID {barangay_id} not found")
+        return barangay.report_themes
+
+def get_general_themes() -> list[str]:
+    with Session(db_engine) as session:
+        summary = session.exec(select(Summary)).first()
+        if not summary:
+            summary = Summary(general_themes=[])
+            session.add(summary)
+            session.commit()
+            session.refresh(summary)
+        return summary.general_themes
 
 def get_barangay_id_of_loc(latitude: float, longitude: float) -> int:
     report_point = Point(longitude, latitude)
@@ -145,19 +162,23 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
     barangay_id = report.under_barangay_id
 
     barangay_analysis = ""
+    barangay_themes = []
     try:
         barangay_analysis = get_barangay_report_analysis(barangay_id)
+        barangay_themes = get_barangay_themes(barangay_id)
     except Exception as error:
         logger.warning(f"Could not retrieve barangay analysis of barangay with id {barangay_id}\nError: {error}")
 
     overall_analysis = ""
+    overall_themes = []
     try:
         overall_analysis = get_general_report_analysis()
+        overall_themes = get_general_themes()
     except Exception as error:
         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
 
     prompt = f"""\
-You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its core thematic issues, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
+You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its specific thematic issues, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
 
 ---
 INPUT CONTEXT:
@@ -182,7 +203,7 @@ CRITICAL PROCESSING INSTRUCTIONS:
 
 2. INDIVIDUAL REPORT ANALYSIS & THEME EXTRACTION:
     - Synthesize the available data inputs. If an image is provided but does not contain uncollected garbage, explicitly state "INVALID REPORT: Image does not depict uncollected waste." Max limit: 5 sentences.
-    - Extract 1 to 3 concise, high-level themes from this specific report (e.g., "Public Health Risk", "Market Day Waste Surge", "Electronic Waste Contamination", "Blocked Waterways").
+    - Extract 1 to 3 concise, high-level themes from this specific report (e.g., "Public Health Risk", "Market Day Waste Surge", "Electronic Waste Contamination", "Blocked Waterways"). These will be returned directly in the `report_themes` array.
 
 3. BARANGAY ANALYSIS & THEMATIC UPDATE:
     - ANALYSIS: Evaluate the existing Barangay Analysis string. If cold starting (empty or placeholder), generate a foundational summary. If updating, integrate new trends if they alter urgency or hazard profiles; otherwise, retain existing text. Max limit: 5 sentences.
@@ -202,6 +223,7 @@ You must return a raw, syntactically valid JSON object matching the schema below
 
 {{
     "report_analysis": "String containing individual report analysis or fallback text.",
+    "report_themes": ["Array", "of", "strings", "extracted", "specifically", "from", "this", "single", "report"],
     "updated_barangay_analysis": "String containing the initial or updated barangay tracking analysis.",
     "updated_barangay_themes": ["Array", "of", "strings", "representing", "the", "deduplicated", "barangay", "themes"],
     "updated_overall_analysis": "String containing the initial or updated city-wide tracking analysis.",
@@ -283,16 +305,28 @@ def process_ai_report_analysis(report_id: int) -> None:
                     session.commit()
                     logger.info(f"Completed analysis update of barangay with ID {analysis["barangay_id"]}")
                 else:
-                    logger.warning(f"Barangay with id {analysis["barangay_id"]} not found, skipping analysis update...")
+                    logger.warning(f"Barangay with ID {analysis["barangay_id"]} not found, skipping analysis update...")
             else:
                 logger.warning("Updated barangay analysis data seems to be malformed, skipping analysis update entirely...")
+
+            # update immediate barangay thematic analysis
+            if isinstance(analysis.get("updated_barangay_themes"), list) and isinstance(analysis.get("barangay_id"), int):
+                barangay = session.get(Barangay, analysis["barangay_id"])
+                if barangay:
+                    logger.info(f"Barangay with ID {analysis["barangay_id"]} found, proceeding with thematic analysis update...")
+                    barangay.report_themes = analysis["updated_barangay_themes"]
+                    session.add(barangay)
+                    session.commit()
+                    logger.info(f"Completed thematic analysis update of barangay with ID {analysis["barangay_id"]}")
+                else:
+                    logger.warning(f"Barangay with ID {analysis["barangay_id"]} not found, skipping thematic analysis update...")
 
             # update overall report analysis
             if isinstance(analysis.get("updated_overall_analysis"), str):
                 summary = session.exec(select(Summary)).first()
                 if not summary:
                     logger.info("Overall summary not initialized yet, proceeding with initialization...")
-                    summary = Summary()
+                    summary = Summary(general_themes=[])
                 summary.general_summary = analysis["updated_overall_analysis"]
                 session.add(summary)
                 session.commit()
@@ -300,9 +334,32 @@ def process_ai_report_analysis(report_id: int) -> None:
             else:
                 logger.warning("Updated overall analysis data seems to be malformed, skipping analysis update entirely...")
 
-            report.report_summary = analysis["report_analysis"]
-            session.add(report)
-            session.commit()
+            # update overall thematic analysis
+            if isinstance(analysis.get("updated_overall_themes"), list):
+                summary = session.exec(select(Summary)).first()
+                if not summary:
+                    logger.info("Overall summary not initialized yet, proceeding with initialization...")
+                    summary = Summary(general_themes=[])
+                summary.general_themes = analysis["updated_overall_themes"]
+                session.add(summary)
+                session.commit()
+                logger.info("Completed thematic analysis update of overall report thematic analysis")
+            else:
+                logger.warning("Updated overall thematic analysis data seems to be malformed, skipping thematic analysis updated entirely...")
+
+            report_updated = False
+
+            if isinstance(analysis.get("report_analysis"), str):
+                report.report_summary = analysis["report_analysis"]
+                report_updated = True
+            if isinstance(analysis.get("report_themes"), str):
+                report.report_themes = analysis["report_themes"]
+                report_updated = True
+
+            if report_updated:
+                session.add(report)
+                session.commit()
+
             logger.info(f"Finished processing analysis of report with ID {report_id}")
 
         except Exception as error:

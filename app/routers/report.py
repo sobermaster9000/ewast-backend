@@ -64,6 +64,7 @@ async def create_report(
         notes=form_data.notes,
         latitude=form_data.latitude,
         longitude=form_data.longitude,
+        report_themes=[],
         reported_by_user_id=reported_by_user_id,
         under_barangay_id=report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude),
         image_url=f"static/uploads/{unique_filename}",
