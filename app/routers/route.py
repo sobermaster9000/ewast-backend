@@ -5,9 +5,9 @@ from sqlmodel import select
 
 import datetime as dt
 
-from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, Role
+from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripRequest, Role
 from app.services.database import SessionDependency
-from app.services import auth
+from app.services import auth, routing
 
 router = APIRouter()
 
@@ -31,6 +31,27 @@ def create_route(current_user: auth.CurrentUser, session: SessionDependency, rou
     route = Route(
         waypoints = route_create.waypoints
     )
+    session.add(route)
+    session.commit()
+    session.refresh(route)
+    return route
+
+@router.post("/routes/trip", response_model=RoutePublic, status_code=status.HTTP_201_CREATED)
+def create_route_trip(current_user: auth.CurrentUser, session: SessionDependency, trip_request: RouteTripRequest) -> RoutePublic:
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin role required")
+
+    trip_request = RouteTripRequest.model_validate(trip_request)
+    try:
+        route_waypoints = routing.generate_unapproved_route_waypoints(
+            start=trip_request.start,
+            end=trip_request.end,
+            report_locations=trip_request.report_locations,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error))
+
+    route = Route(waypoints=route_waypoints)
     session.add(route)
     session.commit()
     session.refresh(route)
