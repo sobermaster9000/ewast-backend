@@ -157,36 +157,44 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
 
     prompt = f"""\
-You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage and sequentially update rolling contextual summaries for its corresponding Barangay (neighborhood) and the City-wide Overall system.
+You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its core thematic issues, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
 
 ---
 INPUT CONTEXT:
-1. Predetermined Report Type: {report_type.value}
+1. Predetermined Report Type: "{report_type.value}"
 2. Citizen-provided Notes (Read and translate any Tagalog, Bisaya, Cebuano, or other local Filipino dialects into English):
 "{report_notes}"
 3. Associated Image: (An attached multimodal image of the site, which may be absent or blank)
 
 ---
 CURRENT HISTORICAL STATE:
-Existing Barangay Analysis: "{barangay_analysis}"
-Existing City-Wide Overall Analysis: "{overall_analysis}"
+1. Existing Barangay Analysis: "{barangay_analysis}"
+2. Existing Barangay Themes: {barangay_themes}
+3. Existing City-Wide Overall Analysis: "{overall_analysis}"
+4. Existing City-Wide Overall Themes: {overall_themes}
 
 ---
 CRITICAL PROCESSING INSTRUCTIONS:
 1. DATA AVAILABILITY EVALUATION (PRE-ANALYSIS):
-    - If BOTH the report notes are empty/blank AND no image is present: Skip visual/textual evaluation. Your individual report analysis MUST state: "Report processed based solely on category metadata: <report type>."
+    - If BOTH the report notes are empty/blank AND no image is present: Skip visual/textual evaluation. Your individual report analysis MUST state: "Report processed based solely on category metadata: {{report type}}."
     - If the image is PRESENT but the report notes are empty/blank: Base your analysis entirely on visual evidence from the image and the predetermined report type.
     - If the report notes are PRESENT but the image is missing/absent: Base your analysis entirely on the contextual data from the translated notes and the predetermined report type. Do not mention missing image context as an error; simply analyze the text.
 
-2. INDIVIDUAL REPORT ANALYSIS: Synthesize the available data inputs. If an image is provided but does not contain uncollected garbage, explicitly state "INVALID REPORT: Image does not depict uncollected waste." Max limit: 5 sentences.
+2. INDIVIDUAL REPORT ANALYSIS & THEME EXTRACTION:
+    - Synthesize the available data inputs. If an image is provided but does not contain uncollected garbage, explicitly state "INVALID REPORT: Image does not depict uncollected waste." Max limit: 5 sentences.
+    - Extract 1 to 3 concise, high-level themes from this specific report (e.g., "Public Health Risk", "Market Day Waste Surge", "Electronic Waste Contamination", "Blocked Waterways").
 
-3. BARANGAY ANALYSIS UPDATE: Evaluate the existing Barangay Analysis string.
-    - COLD START: If the string is empty, null, or "<content>", write a brand new foundational analysis for this Barangay based entirely on the current report's available data.
-    - UPDATING: If a valid summary exists, integrate this new report's data into it if it changes the urgency, waste volume, or localized hazard profile. Otherwise, repeat the existing text exactly. Max limit: 5 sentences.
+3. BARANGAY ANALYSIS & THEMATIC UPDATE:
+    - ANALYSIS: Evaluate the existing Barangay Analysis string. If cold starting (empty or placeholder), generate a foundational summary. If updating, integrate new trends if they alter urgency or hazard profiles; otherwise, retain existing text. Max limit: 5 sentences.
+    - THEMES UPDATE: Evaluate the extracted report themes against the `Existing Barangay Themes` list.
+        - If an extracted theme introduces a conceptually NEW localized issue, append it to the list.
+        - If it is conceptually similar or identical to an existing theme (e.g., "Drainage Clog" vs "Blocked Culverts"), DO NOT duplicate or add it. Retain the existing theme list exactly.
 
-4. CITY-WIDE OVERALL ANALYSIS UPDATE: Evaluate the existing City-Wide Analysis string.
-    - COLD START: If the string is empty, null, or "<content>", write a brand new foundational city summary based on the updated Barangay analysis.
-    - UPDATING: If a valid city-wide summary exists, update it if this Barangay's situation introduces critical municipal priorities (e.g., city-wide flooding risks, toxic waste accumulation). Otherwise, repeat the existing text exactly. Max limit: 5 sentences.
+4. CITY-WIDE OVERALL ANALYSIS & THEMATIC UPDATE:
+    - ANALYSIS: Evaluate the existing City-Wide Analysis string. If cold starting, generate a foundational city summary. If updating, modify it if the updated Barangay tracking introduces macro municipal priorities (e.g., city-wide flooding risks, institutional collection failures). Max limit: 5 sentences.
+    - THEMES UPDATE: Evaluate the updated Barangay themes against the `Existing City-Wide Overall Themes` list.
+        - If a theme represents a distinct, macro-level systemic trend affecting multiple regions, append it to the city-wide list.
+        - If it is redundant, highly similar, or too hyper-localized to matter at a city scale, DO NOT modify the list.
 
 ---
 OUTPUT FORMAT:
@@ -195,7 +203,9 @@ You must return a raw, syntactically valid JSON object matching the schema below
 {{
     "report_analysis": "String containing individual report analysis or fallback text.",
     "updated_barangay_analysis": "String containing the initial or updated barangay tracking analysis.",
-    "updated_overall_analysis": "String containing the initial or updated city-wide tracking analysis."
+    "updated_barangay_themes": ["Array", "of", "strings", "representing", "the", "deduplicated", "barangay", "themes"],
+    "updated_overall_analysis": "String containing the initial or updated city-wide tracking analysis.",
+    "updated_overall_themes": ["Array", "of", "strings", "representing", "the", "deduplicated", "city", "wide", "themes"]
 }}"""
 
     payload = {
