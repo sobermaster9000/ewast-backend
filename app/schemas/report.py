@@ -10,7 +10,15 @@ from fastapi import UploadFile, Form
 
 # helper enum for report types
 class ReportType(str, Enum):
-    DUMMY = "dummy" # change to proper report types
+    DRAINAGE_BLOCKAGE = "Drainage Blockage"
+    E_WASTE = "E-Waste"
+    HAZARDOUS_WASTE = "Hazardous Waste"
+    ORGANIC_WASTE = "Organic Waste"
+    PLASTIC_WASTE = "Plastic Waste"
+    BULKY_WASTE = "Bulky Waste"
+    MIXED_WASTE = "Mixed Waste"
+    OVERFLOWING_BIN_S = "Overflowing Bin/s"
+    ILLEGAL_DUMPING = "Illegal Dumping"
 
 # base report model
 class ReportBase(SQLModel):
