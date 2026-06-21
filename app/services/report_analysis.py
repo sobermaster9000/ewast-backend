@@ -85,7 +85,21 @@ def get_report_type_freq(barangay_id: int = 0) -> list[ReportTypeFreq]:
         return report_type_freqs
 
 def get_report_themes(barangay_id: int = 0) -> list[str]:
-    return ["dummy"]
+    with Session(db_engine) as session:
+        if barangay_id:
+            barangay = session.get(Barangay, barangay_id)
+            if barangay:
+                return barangay.report_themes
+            else:
+                return []
+        else:
+            summary = session.exec(select(Summary)).first()
+            if not summary:
+                summary = Summary(general_themes=[])
+                session.add(summary)
+                session.commit()
+                session.refresh(summary)
+            return summary.general_themes
 
 def get_barangay_report_analysis(barangay_id: int) -> str:
     with Session(db_engine) as session:
