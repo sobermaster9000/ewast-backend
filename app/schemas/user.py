@@ -12,7 +12,7 @@ class Role(str, Enum):
 
 # base user model
 class UserBase(SQLModel):
-    user_id: int | None = Field(default=None, primary_key=None)
+    user_id: int | None = Field(default=None, primary_key=True)
     firstname: str = Field(max_length=100)
     lastname: str = Field(max_length=100)
     email: str = Field(max_length=100, unique=True, index=True)
