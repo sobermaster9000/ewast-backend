@@ -6,6 +6,7 @@ from sqlmodel import select
 import datetime as dt
 
 from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripRequest, Role
+from app.schemas.route import RouteTripRequestBarangay
 from app.services.database import SessionDependency
 from app.services import auth, routing
 
@@ -50,6 +51,27 @@ def create_route_trip(current_user: auth.CurrentUser, session: SessionDependency
         )
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error))
+
+    route = Route(waypoints=route_waypoints)
+    session.add(route)
+    session.commit()
+    session.refresh(route)
+    return route
+
+@router.post("/routes/trip/barangay/{barangay_id}", response_model=RoutePublic, status_code=status.HTTP_201_CREATED)
+def create_route_trip_for_barangay(current_user: auth.CurrentUser, session: SessionDependency, trip_request_barangay: RouteTripRequestBarangay) -> RoutePublic:
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin role required")
+
+    trip_request_barangay = RouteTripRequestBarangay.model_validate(trip_request_barangay)
+    try:
+        route_waypoints = routing.generate_unapproved_route_waypoints_for_barangay(
+            start=trip_request_barangay.start,
+            end=trip_request_barangay.end,
+            barangay_id=trip_request_barangay.barangay_id
+        )
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"An error occured trying to generate the route trip: {error}")
 
     route = Route(waypoints=route_waypoints)
     session.add(route)

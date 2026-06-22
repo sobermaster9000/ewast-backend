@@ -5,9 +5,10 @@ from shapely.geometry import Point, Polygon
 from sqlmodel import Session, select
 
 from app.config import settings
-from app.schemas import Location, Barangay
+from app.schemas import Location, Barangay, Report
 from app.services.database import db_engine
 
+import random
 
 def _validate_location(location: Location) -> Location:
     if not isinstance(location, Location):
@@ -99,6 +100,12 @@ def _parse_osrm_trip_response(response_json: dict) -> list[tuple[float, float]]:
     return [(float(lat), float(lon)) for lon, lat in coordinates]
 
 
+def _get_report_locations_from_barangay_id(barangay_id: int) -> list[Location]:
+    with Session(db_engine) as session:
+        reports = session.exec(select(Report).where(Report.under_barangay_id == barangay_id)).all()
+        report_locations = [Location(latitude=report.latitude, longitude=report.longitude) for report in reports]
+        return report_locations
+
 def generate_unapproved_route_waypoints(start: Location, end: Location, report_locations: list[Location]) -> list[tuple[float, float]]:
     _validate_report_locations_in_barangays(report_locations)
     if len(report_locations) > 24:
@@ -111,3 +118,14 @@ def generate_unapproved_route_waypoints(start: Location, end: Location, report_l
         raise ValueError(f"OSRM trip request failed with status {response.status_code}: {response.text}")
 
     return _parse_osrm_trip_response(response.json())
+
+def generate_unapproved_route_waypoints_for_barangay(start: Location, end: Location, barangay_id: int) -> list[tuple[float, float]]:
+    report_locations = _get_report_locations_from_barangay_id(barangay_id)
+
+    if not report_locations:
+        raise Exception(f"No reports under barangay with ID {barangay_id}")
+
+    if len(report_locations) > 24:
+        report_locations = random.sample(report_locations, 24)
+
+    return generate_unapproved_route_waypoints(start=start, end=end, report_locations=report_locations)
