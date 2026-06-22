@@ -17,15 +17,14 @@ class RouteTripRequest(SQLModel):
 
 # base route model
 class RouteBase(SQLModel):
+    route_id: int | None = Field(default=None, primary_key=True)
     waypoints: list[tuple[float, float]] = Field(sa_column=Column(JSON, nullable=False, default=[]))
+    is_approved: bool = Field(default=False)
+    data_approved: datetime | None = None
 
 # standard route model to be stored in database
 class Route(RouteBase, table=True):
     __tablename__: str = "routes"
-
-    route_id: int | None = Field(default=None, primary_key=True)
-    is_approved: bool = Field(default=False)
-    date_approved: datetime | None = None
 
 # public route model to be returned in API calls
 class RoutePublic(RouteBase):
