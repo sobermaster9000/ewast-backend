@@ -4,13 +4,21 @@ from datetime import datetime
 from enum import Enum
 
 from sqlmodel import SQLModel, Field
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, Column, JSON
 
 from fastapi import UploadFile, Form
 
 # helper enum for report types
 class ReportType(str, Enum):
-    DUMMY = "dummy" # change to proper report types
+    DRAINAGE_BLOCKAGE = "Drainage Blockage"
+    E_WASTE = "E-Waste"
+    HAZARDOUS_WASTE = "Hazardous Waste"
+    ORGANIC_WASTE = "Organic Waste"
+    PLASTIC_WASTE = "Plastic Waste"
+    BULKY_WASTE = "Bulky Waste"
+    MIXED_WASTE = "Mixed Waste"
+    OVERFLOWING_BIN_S = "Overflowing Bin/s"
+    ILLEGAL_DUMPING = "Illegal Dumping"
 
 # base report model
 class ReportBase(SQLModel):
@@ -25,8 +33,10 @@ class Report(ReportBase, table=True):
 
     report_id: int | None = Field(default=None, primary_key=True)
     image_url: str | None = Field(default=None, max_length=1000)
-    ai_summary: str | None = Field(default=None)
+    report_summary: str | None = Field(default=None)
+    report_themes: list[str] = Field(sa_column=Column(JSON, default=[]))
     reported_by_user_id: int # manually verify that this exists in `users` table
+    under_barangay_id: int
     is_collected: bool = Field(default=False)
     date_reported: datetime
 
@@ -34,8 +44,10 @@ class Report(ReportBase, table=True):
 class ReportPublic(ReportBase):
     report_id: int
     image_url: str | None = Field(default=None, max_length=1000)
-    ai_summary: str | None = Field(default=None)
+    report_summary: str | None = Field(default=None)
+    report_themes: list[str] = Field(sa_column=Column(JSON, default=[]))
     reported_by_user_id: int # manually verify that this exists in `users` table
+    under_barangay_id: int
     is_collected: bool = Field(default=False)
     date_reported: datetime
 
