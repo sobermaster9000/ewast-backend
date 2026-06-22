@@ -12,6 +12,7 @@ class Role(str, Enum):
 
 # base user model
 class UserBase(SQLModel):
+    user_id: int | None = Field(default=None, primary_key=None)
     firstname: str = Field(max_length=100)
     lastname: str = Field(max_length=100)
     email: str = Field(max_length=100, unique=True, index=True)
@@ -21,7 +22,6 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     __tablename__: str = "users"
 
-    user_id: int | None = Field(default=None, primary_key=True)
     password_hash: str
     date_created: datetime
     reject_tokens_before_timestamp: float # tokens created before this timestamp will be invalidated
