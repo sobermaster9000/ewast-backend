@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import Role, UserBase, User, UserPublic, UserCreate, UserLogin, UserToken
+from app.schemas import Role, UserBase, User, UserPublic, UserCreate, UserLogin, UserToken, Detail
 from app.services.database import SessionDependency
 from app.services import auth
 
@@ -67,9 +67,7 @@ def login_user(user_login: UserLogin, session: SessionDependency) -> UserToken:
     return UserToken(access_token=token)
 
 # frontend must also delete stored token
-@router.post("/users/logout", response_model=None)
-def logout_user(current_user: auth.CurrentUser, session: SessionDependency):
+@router.post("/users/logout", response_model=Detail)
+def logout_user(current_user: auth.CurrentUser, session: SessionDependency) -> Detail:
     auth.update_token_rejection_timestamp(current_user, session)
-    return {
-        "detail": "Successfully logged out"
-    }
+    return Detail(detail="Successfully logged out")
