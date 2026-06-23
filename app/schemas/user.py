@@ -38,14 +38,13 @@ class UserCreate(BaseModel):
     password: str
     password_confirm: str
     role: Role
-# class UserCreate(UserBase):
-    # password: str = Field(max_length=100)
-    # password_confirm: str = Field(max_length=100)
 
 # user model for logins
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-# class UserLogin(SQLModel):
-#     email: str = Field(max_length=100)
-#     password: str = Field(max_length=100)
+
+# for returning token credentials after login
+class UserToken(BaseModel):
+    access_token: str
+    token_type: str = "Bearer"
