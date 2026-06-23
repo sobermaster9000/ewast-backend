@@ -8,8 +8,8 @@ class Summary(SQLModel, table=True):
     general_themes: list[str] = Field(sa_column=Column(JSON, default=[]))
 
 class GeneralSummary(BaseModel):
-    general_summary: str = ""
+    general_summary: str
 
 class BarangaySummary(BaseModel):
     barangay_id: int
-    barangay_summary: str = ""
+    barangay_summary: str
