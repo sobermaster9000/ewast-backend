@@ -73,7 +73,7 @@ def create_route_trip_for_barangay(current_user: auth.CurrentUser, session: Sess
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"An error occured trying to generate the route trip: {error}")
 
-    route = Route(waypoints=route_waypoints)
+    route = Route(waypoints=route_waypoints, for_barangay_id=trip_request_barangay.barangay_id)
     session.add(route)
     session.commit()
     session.refresh(route)

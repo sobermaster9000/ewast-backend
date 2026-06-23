@@ -26,9 +26,10 @@ class RouteBase(SQLModel):
     route_id: int | None = Field(default=None, primary_key=True)
     waypoints: list[tuple[float, float]] = Field(sa_column=Column(JSON, nullable=False, default=[]))
     is_approved: bool = Field(default=False)
-    date_approved: datetime | None = None
     collection_rate: float | None = Field(default=None)
+    for_barangay_id: int | None = Field(default=None)
     est_fuel_cost: float | None = Field(default=None)
+    date_approved: datetime | None = None
 
 # standard route model to be stored in database
 class Route(RouteBase, table=True):
