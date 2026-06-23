@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary
 from app.services.database import SessionDependency
 from app.services import auth
 from app.services import report_analysis
@@ -84,16 +84,14 @@ async def create_report(
 
     return report
 
-@router.get("/reports/general/summary")
-def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependency):
+@router.get("/reports/general/summary", response_model=GeneralSummary)
+def get_reports_summary(current_user: auth.CurrentUser, session: SessionDependency) -> GeneralSummary:
     ### uncomment if restricted to admin only ###
     # if current_user.role != Role.ADMIN:
     #     raise HTTPException(status_code=403, detail="Admin role required")
     try:
         general_summary = report_analysis.get_general_report_analysis()
-        return {
-            "general_summary": general_summary
-        }
+        return GeneralSummary(general_summary=general_summary)
     except:
         raise HTTPException(status_code=400, detail="An error occured while trying to get the general summary")
 
@@ -143,17 +141,14 @@ def get_reports_from_user(user_id: int, session: SessionDependency, offset: int 
     reports = session.exec(select(Report).where(Report.reported_by_user_id == user_id).offset(offset).limit(limit)).all()
     return reports
 
-@router.get("/reports/summary/barangay/{barangay_id}", response_model=None)
-def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency):
+@router.get("/reports/summary/barangay/{barangay_id}", response_model=BarangaySummary)
+def get_reports_summary_barangay(barangay_id: int, current_user: auth.CurrentUser, session: SessionDependency) -> BarangaySummary:
     ### uncomment if restricted to admin only ###
     # if current_user.role != Role.ADMIN:
     #     raise HTTPException(status_code=403, detail="Admin role required")
     try:
         barangay_summary = report_analysis.get_barangay_report_analysis(barangay_id)
-        return {
-            "barangay_id": barangay_id,
-            "barangay_summary": barangay_summary
-        }
+        return BarangaySummary(barangay_id=barangay_id, barangay_summary=barangay_summary)
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"An error occured while trying to get the barangay summary: {error}")
 

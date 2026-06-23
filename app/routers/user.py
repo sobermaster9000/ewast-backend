@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import Role, UserBase, User, UserPublic, UserCreate, UserLogin
+from app.schemas import Role, UserBase, User, UserPublic, UserCreate, UserLogin, UserToken, Detail
 from app.services.database import SessionDependency
 from app.services import auth
 
@@ -60,19 +60,14 @@ def signup_user(user_create: UserCreate, session: SessionDependency) -> UserPubl
     session.refresh(user)
     return user
 
-@router.post("/users/login", response_model=None)
-def login_user(user_login: UserLogin, session: SessionDependency):
+@router.post("/users/login", response_model=UserToken)
+def login_user(user_login: UserLogin, session: SessionDependency) -> UserToken:
     user_login = UserLogin.model_validate(user_login)
     token = auth.get_token_from_credentials(user_login.email, user_login.password, session)
-    return {
-        "access_token" : token,
-        "token_type": "Bearer"
-    }
+    return UserToken(access_token=token)
 
 # frontend must also delete stored token
-@router.post("/users/logout", response_model=None)
-def logout_user(current_user: auth.CurrentUser, session: SessionDependency):
+@router.post("/users/logout", response_model=Detail)
+def logout_user(current_user: auth.CurrentUser, session: SessionDependency) -> Detail:
     auth.update_token_rejection_timestamp(current_user, session)
-    return {
-        "detail": "Successfully logged out"
-    }
+    return Detail(detail="Successfully logged out")
