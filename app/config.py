@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     DESCRIPTION: str = "An API service for EWAST"
     VERSION: str = "1.0.0"
 
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5432/ewast_db"
     DATABASE_KEY: str
 
     OPENROUTER_MODEL: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
