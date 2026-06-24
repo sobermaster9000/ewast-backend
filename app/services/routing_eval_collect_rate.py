@@ -78,6 +78,6 @@ def compute_overall_collection_rate_for_barangay(barangay_id: int, radius_meters
     overall_collection_rate_percent = collection_rate_percent_sum / len(indiv_rates)
     report_count = get_report_count(barangay_id)
     return {
-        "est_collection_rate_percent": overall_collection_rate_percent,
-        "est_collected": int(report_count * overall_collection_rate_percent)
+        "collection_rate_percent": overall_collection_rate_percent,
+        "collected": int(report_count * overall_collection_rate_percent)
     }

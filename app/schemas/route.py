@@ -44,19 +44,19 @@ class RouteCreate(RouteBase):
     pass
 
 class RouteEvaluation(BaseModel):
-    route_id: int
-    collection_rate_percent: float
-    collected: int
-    total_distance_km: float
-    total_liters: float
-    cost_per_km_php: float
-    total_fuel_cost_php: float
+    route_id: int = 0
+    collection_rate_percent: float = 0.0
+    collected: int = 0
+    total_distance_km: float = 0.0
+    total_liters: float = 0.0
+    cost_per_km_php: float = 0.0
+    total_fuel_cost_php: float = 0.0
 
 class RoutesEvaluation(BaseModel):
-    collection_rate_percent: float
-    collected: int
-    total_distance_km: float
-    total_liters: float
-    cost_per_km_php: float
-    total_fuel_cost_php: float
-    invid_evals: list[RouteEvaluation]
+    collection_rate_percent: float = 0.0
+    collected: int = 0
+    total_distance_km: float = 0.0
+    total_liters: float = 0.0
+    cost_per_km_php: float = 0.0
+    total_fuel_cost_php: float = 0.0
+    indiv_evals: list[RouteEvaluation]

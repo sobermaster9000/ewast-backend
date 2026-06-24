@@ -6,7 +6,7 @@ from sqlmodel import select
 import datetime as dt
 
 from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripRequest, Role, Detail
-from app.schemas.route import RouteTripRequestBarangay
+from app.schemas.route import RouteTripRequestBarangay, RouteEvaluation, RoutesEvaluation
 from app.services.database import SessionDependency
 from app.services import auth, routing
 from app.services.routing_eval_collect_rate import compute_collection_rates_for_barangay, compute_overall_collection_rate_for_barangay
@@ -114,18 +114,36 @@ def delete_route(current_user: auth.CurrentUser, session: SessionDependency, rou
     return Detail(detail="Successfully deleted route")
 
 
-@router.post("/routes/evaluate/barangay/{barangay_id}", response_model=None)
-def evaluate_routes_for_barangay(current_user: auth.CurrentUser, barangay_id: int) -> dict[str, float | int]:
+@router.post("/routes/evaluate/barangay/{barangay_id}", response_model=RoutesEvaluation)
+def evaluate_routes_for_barangay(current_user: auth.CurrentUser, barangay_id: int) -> RoutesEvaluation:
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin role required")
 
+    result = RoutesEvaluation(indiv_evals=[])
+
     try:
-        results = compute_collection_rates_for_barangay(barangay_id)
+        collection_metrics = compute_collection_rates_for_barangay(barangay_id)
+        for route_id, collection_rate_percent, collected in collection_metrics:
+            efficiency_metrics = get_estimated_route_efficiency(route_id)
+            result.indiv_evals.append(RouteEvaluation(
+                route_id=route_id,
+                collection_rate_percent=collection_rate_percent,
+                collected=collected,
+                total_distance_km=efficiency_metrics["total_distance_km"],
+                total_liters=efficiency_metrics["total_liters"],
+                cost_per_km_php=efficiency_metrics["cost_per_km_php"],
+                total_fuel_cost_php=efficiency_metrics["total_fuel_cost_php"]
+            ))
+        overall_collection_metrics = compute_overall_collection_rate_for_barangay(barangay_id)
+        overall_efficiency_metrics = get_estimated_routes_efficiency_for_barangay(barangay_id)
+        result.collection_rate_percent = overall_collection_metrics["collection_rate_percent"]
+        result.collected = overall_collection_metrics["collected"]
+        result.total_distance_km = overall_efficiency_metrics["total_distance_km"]
+        result.total_liters = overall_efficiency_metrics["total_liters"]
+        result.cost_per_km_php = overall_efficiency_metrics["cost_per_km_php"]
+        result.total_fuel_cost_php = overall_efficiency_metrics["total_fuel_cost_php"]
+
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Failed to compute collection rates: {error}")
 
-    # return structured results
-    return [
-        {"route_id": route_id, "collection_rate": collection_rate, "collected": collected}
-        for route_id, collection_rate, collected in results
-    ]
+    return result

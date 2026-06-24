@@ -46,25 +46,25 @@ def get_estimated_route_efficiency(route_id: int) -> dict[str, float]:
         route_dist_km = _get_route_distance(route.waypoints)
         return {
             "total_distance_km": route_dist_km,
-            "est_total_liters": AVG_L_KM * route_dist_km,
-            "est_cost_per_km_php": AVG_L_KM * fuel_price_L,
-            "est_fuel_cost_php": AVG_L_KM * route_dist_km * fuel_price_L
+            "total_liters": AVG_L_KM * route_dist_km,
+            "cost_per_km_php": AVG_L_KM * fuel_price_L,
+            "fuel_cost_php": AVG_L_KM * route_dist_km * fuel_price_L
         }
 
 def get_estimated_routes_efficiency_for_barangay(barangay_id: int) -> dict[str, float]:
     fuel_price_L = _get_diesel_price()
     result = {
         "total_distance_km": 0.0,
-        "est_total_liters": 0.0,
-        "est_cost_per_km_php": 0.0,
-        "est_fuel_cost_php": 0.0
+        "total_liters": 0.0,
+        "cost_per_km_php": 0.0,
+        "fuel_cost_php": 0.0
     }
     with Session(db_engine) as session:
         routes = session.exec(select(Route).where(Route.for_barangay_id == barangay_id)).all()
         for route in routes:
             route_result = get_estimated_route_efficiency(route.route_id)
             result["total_distance"] += route_result["total_distance"]
-    result["est_total_liters"] = AVG_L_KM * result["total_distance_km"]
-    result["est_cost_per_km_php"] = AVG_L_KM * fuel_price_L
-    result["est_fuel_cost_php"] = AVG_L_KM * result["total_distance_km"] * fuel_price_L
+    result["total_liters"] = AVG_L_KM * result["total_distance_km"]
+    result["cost_per_km_php"] = AVG_L_KM * fuel_price_L
+    result["fuel_cost_php"] = AVG_L_KM * result["total_distance_km"] * fuel_price_L
     return result
