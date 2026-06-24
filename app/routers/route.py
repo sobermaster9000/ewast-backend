@@ -5,7 +5,7 @@ from sqlmodel import select
 
 import datetime as dt
 
-from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripRequest, Role
+from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripRequest, Role, Detail
 from app.schemas.route import RouteTripRequestBarangay
 from app.services.database import SessionDependency
 from app.services import auth, routing
@@ -101,17 +101,15 @@ def approve_route(current_user: auth.CurrentUser, session: SessionDependency, ro
     session.refresh(route)
     return route
 
-@router.get("/routes/delete/{route_id}", response_model=RoutePublic)
-def delete_route(current_user: auth.CurrentUser, session: SessionDependency, route_id: int) -> RoutePublic:
+@router.get("/routes/delete/{route_id}", response_model=Detail)
+def delete_route(current_user: auth.CurrentUser, session: SessionDependency, route_id: int) -> Detail:
     if current_user.role != Role.ADMIN:
             raise HTTPException(status_code=403, detail="Admin role required")
     route = session.get(Route, route_id)
     if not route: raise HTTPException(status_code=404, detail="Route not found")
     session.delete(route)
     session.commit()
-    return {
-        "status_code": 204
-    }
+    return Detail(detail="Successfully deleted route")
 
 
 @router.post("/routes/evaluate/barangay/{barangay_id}")
