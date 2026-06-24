@@ -1,4 +1,4 @@
-# from pydantic import BaseModel
+from pydantic import BaseModel
 from datetime import datetime
 
 from sqlmodel import SQLModel, Field
@@ -42,3 +42,21 @@ class RoutePublic(RouteBase):
 # route model for instantiation from JSON input
 class RouteCreate(RouteBase):
     pass
+
+class RouteEvaluation(BaseModel):
+    route_id: int
+    collection_rate_percent: float
+    collected: int
+    total_distance_km: float
+    total_liters: float
+    cost_per_km_php: float
+    total_fuel_cost_php: float
+
+class RoutesEvaluation(BaseModel):
+    collection_rate_percent: float
+    collected: int
+    total_distance_km: float
+    total_liters: float
+    cost_per_km_php: float
+    total_fuel_cost_php: float
+    invid_evals: list[RouteEvaluation]

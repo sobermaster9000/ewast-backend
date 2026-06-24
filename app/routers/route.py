@@ -9,6 +9,8 @@ from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripReq
 from app.schemas.route import RouteTripRequestBarangay
 from app.services.database import SessionDependency
 from app.services import auth, routing
+from app.services.routing_eval_collect_rate import compute_collection_rates_for_barangay, compute_overall_collection_rate_for_barangay
+from app.services.routing_eval_fuel import get_estimated_route_efficiency, get_estimated_routes_efficiency_for_barangay
 
 router = APIRouter()
 
@@ -112,13 +114,13 @@ def delete_route(current_user: auth.CurrentUser, session: SessionDependency, rou
     return Detail(detail="Successfully deleted route")
 
 
-@router.post("/routes/evaluate/barangay/{barangay_id}")
-def evaluate_routes_for_barangay(current_user: auth.CurrentUser, barangay_id: int):
+@router.post("/routes/evaluate/barangay/{barangay_id}", response_model=None)
+def evaluate_routes_for_barangay(current_user: auth.CurrentUser, barangay_id: int) -> dict[str, float | int]:
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin role required")
 
     try:
-        results = routing.compute_collection_rates_for_barangay(barangay_id)
+        results = compute_collection_rates_for_barangay(barangay_id)
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Failed to compute collection rates: {error}")
 
