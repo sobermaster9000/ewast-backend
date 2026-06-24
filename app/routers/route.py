@@ -112,3 +112,20 @@ def delete_route(current_user: auth.CurrentUser, session: SessionDependency, rou
     return {
         "status_code": 204
     }
+
+
+@router.post("/routes/evaluate/barangay/{barangay_id}")
+def evaluate_routes_for_barangay(current_user: auth.CurrentUser, barangay_id: int):
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin role required")
+
+    try:
+        results = routing.compute_collection_rates_for_barangay(barangay_id)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to compute collection rates: {error}")
+
+    # return structured results
+    return [
+        {"route_id": route_id, "collection_rate": collection_rate, "collected": collected}
+        for route_id, collection_rate, collected in results
+    ]
