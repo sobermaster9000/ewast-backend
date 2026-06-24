@@ -9,7 +9,7 @@ from pyproj import Transformer
 
 from app.services.database import db_engine
 from app.schemas import Report, Route
-
+from app.services.report_analysis import get_report_count
 
 def compute_collection_rates_for_barangay(barangay_id: int, radius_meters: float = 10.0) -> list[tuple[int, float, int]]:
     """
@@ -69,3 +69,15 @@ def compute_collection_rates_for_barangay(barangay_id: int, radius_meters: float
             results.append((route.route_id, route.collection_rate, collected))
 
         return results
+
+def compute_overall_collection_rate_for_barangay(barangay_id: int, radius_meters: float = 10.0) -> dict[str, float | int]:
+    indiv_rates = compute_collection_rates_for_barangay(barangay_id=barangay_id, radius_meters=radius_meters)
+    collection_rate_percent_sum = 0.0
+    for _, collection_rate_percent, _ in indiv_rates:
+        collection_rate_percent_sum += collection_rate_percent
+    overall_collection_rate_percent = collection_rate_percent_sum / len(indiv_rates)
+    report_count = get_report_count(barangay_id)
+    return {
+        "est_collection_rate_percent": overall_collection_rate_percent,
+        "est_collected": int(report_count * overall_collection_rate_percent)
+    }
