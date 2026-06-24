@@ -114,7 +114,7 @@ def delete_route(current_user: auth.CurrentUser, session: SessionDependency, rou
     return Detail(detail="Successfully deleted route")
 
 
-@router.post("/routes/evaluate/barangay/{barangay_id}", response_model=RoutesEvaluation)
+@router.get("/routes/evaluate/barangay/{barangay_id}", response_model=RoutesEvaluation)
 def evaluate_routes_for_barangay(current_user: auth.CurrentUser, barangay_id: int) -> RoutesEvaluation:
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin role required")
