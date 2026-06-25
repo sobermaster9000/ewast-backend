@@ -19,7 +19,7 @@ router = APIRouter(
 @router.get("/", response_model=list[AnnouncementPublic])
 def get_announcements(
     session: SessionDependency,
-    current_user: auth.CurrentActiveUser,
+    current_user: auth.CurrentUser,
     offset: int = 0,
     limit: Annotated[int, Query(le=25)] = 25
 ) -> list[AnnouncementPublic]:
@@ -46,13 +46,13 @@ def get_announcement(
 @router.post("/create", response_model=AnnouncementPublic, status_code=status.HTTP_201_CREATED)
 async def create_announcement(
     session: SessionDependency,
-    current_user: auth.CurrentActiveUser,
+    current_user: auth.CurrentUser,
     form_data: AnnouncementFormFields = Depends(AnnouncementFormFields.as_form),
     image: UploadFile = File(...),
 ) -> AnnouncementPublic:
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin role required")
-    
+
     announced_by_user_id = current_user.user_id
     if not announced_by_user_id:
         raise HTTPException(status_code=500, detail="An error occured while trying to get user ID")
@@ -60,7 +60,7 @@ async def create_announcement(
     barangay_id = current_user.assigned_barangay_id
     if not barangay_id:
         raise HTTPException(status_code=400, detail="User is not assigned to any barangay")
-    
+
     upload_dir = "static/uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
@@ -93,7 +93,7 @@ async def create_announcement(
 @router.get("/{announcement_id}/delete", response_model=Detail)
 def delete_announcement(
     session: SessionDependency,
-    current_user: auth.CurrentActiveUser,
+    current_user: auth.CurrentUser,
     announcement_id: int
 ) -> Detail:
     if current_user.role != Role.ADMIN:

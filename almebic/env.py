@@ -7,7 +7,7 @@ from alembic import context
 
 from sqlmodel import SQLModel
 
-from app.schemas import Assignment, Barangay, Report, Route, Summary, User
+from app.schemas import Assignment, Barangay, Report, Route, Summary, User, Announcement
 
 from app.config import settings
 
