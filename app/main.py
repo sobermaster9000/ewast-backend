@@ -32,10 +32,9 @@ app.include_router(report_router, prefix="/api", tags=["report"])
 app.include_router(barangay_router, prefix="/api", tags=["barangay"])
 app.include_router(assignment_router, prefix="/api", tags=["assignment"])
 
-# replace with migration in production
 @app.on_event("startup")
 def on_startup():
-    database.init_db_and_tables()
+    database.init_barangays_table()
 
 @app.get("/")
 def root():

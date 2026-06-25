@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.schemas import Barangay
+from app.config import settings
 
 import logging
 
@@ -15,12 +16,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# replace this to remote db in production
-sqlite_filename = "database.db"
-sqlite_url = f"sqlite:///{sqlite_filename}"
-
-connect_args = {"check_same_thread": False}
-db_engine = create_engine(sqlite_url, connect_args=connect_args)
+db_engine = create_engine(
+    settings.DATABASE_URL,
+    echo=True, # debug
+    pool_pre_ping=True
+)
 
 def get_session():
     with Session(db_engine) as session:
@@ -28,11 +28,12 @@ def get_session():
 
 SessionDependency = Annotated[Session, Depends(get_session)]
 
-def init_db_and_tables():
+def init_db_and_tables() -> None:
     logger.info("Creating database tables...")
     SQLModel.metadata.create_all(db_engine)
 
-    logger.info("Initializing barangay table...")
+def init_barangays_table() -> None:
+    logger.info("Initializing barangays table...")
     with Session(db_engine) as session:
         folder = Path("app/data/barangays")
         for file in folder.iterdir():
@@ -61,7 +62,8 @@ def init_db_and_tables():
                 barangay = Barangay(
                     barangay_id=barangay_id,
                     name=barangay_name,
-                    bounds_coords=barangay_bounds
+                    bounds_coords=barangay_bounds,
+                    report_themes=[]
                 )
                 session.add(barangay)
                 session.commit()
