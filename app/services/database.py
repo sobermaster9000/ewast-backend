@@ -30,7 +30,7 @@ else:
     db_engine = create_engine(
         database_url,
         echo=True,
-        pool_pre_pring=True
+        pool_pre_ping=True
     )
 
 def get_session():
