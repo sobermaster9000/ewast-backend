@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.schemas import Barangay
+from app.config import settings
 
 import logging
 
@@ -15,12 +16,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# replace this to remote db in production
-sqlite_filename = "database.db"
-sqlite_url = f"sqlite:///{sqlite_filename}"
+# Parse database URL from settings
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-connect_args = {"check_same_thread": False}
-db_engine = create_engine(sqlite_url, connect_args=connect_args)
+if database_url.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+    db_engine = create_engine(database_url, connect_args=connect_args)
+else:
+    db_engine = create_engine(database_url)
 
 def get_session():
     with Session(db_engine) as session:
