@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Query, HTTPException, status
+from fastapi import APIRouter, Query, HTTPException, status, Depends, UploadFile, File
 from typing import Annotated
 
 from sqlmodel import select
 
 import datetime as dt
+import os
 
-from app.schemas import Announcement, AnnouncementCreate, AnnouncementPublic, Role, Detail
+from app.schemas import Announcement, AnnouncementCreate, AnnouncementPublic, Role, Detail, AnnouncementFormFields
 from app.services import auth
 from app.services.database import SessionDependency
 
@@ -43,20 +44,46 @@ def get_announcement(
     return announcement
 
 @router.post("/create", response_model=AnnouncementPublic, status_code=status.HTTP_201_CREATED)
-def create_announcement(
+async def create_announcement(
     session: SessionDependency,
     current_user: auth.CurrentActiveUser,
-    announcement_create: AnnouncementCreate
+    form_data: AnnouncementFormFields = Depends(AnnouncementFormFields.as_form),
+    image: UploadFile = File(...),
 ) -> AnnouncementPublic:
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin role required")
+    
+    announced_by_user_id = current_user.user_id
+    if not announced_by_user_id:
+        raise HTTPException(status_code=500, detail="An error occured while trying to get user ID")
+
+    barangay_id = current_user.assigned_barangay_id
+    if not barangay_id:
+        raise HTTPException(status_code=400, detail="User is not assigned to any barangay")
+    
+    upload_dir = "static/uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_extension = os.path.splitext(image.filename)[1]
+    unique_filename = f"{int(dt.datetime.now().timestamp())}{file_extension}"
+    file_path = os.path.join(upload_dir, unique_filename)
+
+    try:
+        contents = await image.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
+    finally:
+        await image.close()
+
     announcement = Announcement(
-        title=announcement_create.title,
-        content=announcement_create.content,
-        announced_by_user_id=current_user.user_id,
-        date_published=dt.date.today(),
-        under_barangay_id=current_user.assigned_barangay_id,
-        image_url=announcement_create.image_url
+        title=form_data.title,
+        content=form_data.content,
+        announced_by_user_id=announced_by_user_id,
+        date_published=dt.datetime.now(),
+        under_barangay_id=barangay_id,
+        image_url=f"static/uploads/{unique_filename}",
     )
     session.add(announcement)
     session.commit()
