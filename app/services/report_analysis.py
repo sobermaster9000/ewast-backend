@@ -154,14 +154,14 @@ def get_report_type_freq(barangay_id: int = 0) -> list[ReportTypeFreq]:
         return report_type_freqs
 
 def get_report_themes(barangay_id: int = 0) -> list[Theme]:
+    themes = []
     with Session(db_engine) as session:
         if barangay_id:
             barangay = session.get(Barangay, barangay_id)
             if barangay:
-                themes = []
                 for theme in barangay.report_themes:
                     themes.append(Theme(title=theme.get("title", ""), codes=theme.get("codes", [])))
-                return themes
+            return themes
         else:
             summary = session.exec(select(Summary)).first()
             if not summary:
@@ -169,7 +169,6 @@ def get_report_themes(barangay_id: int = 0) -> list[Theme]:
                 session.add(summary)
                 session.commit()
                 session.refresh(summary)
-            themes = []
             for theme in summary.general_themes:
                 themes.append(Theme(title=theme.get("title", ""), codes=theme.get("codes", [])))
             return themes
@@ -319,9 +318,9 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
         raise Exception(f"OpenRouter gateway error: {response.text}")
 
     result = response.json()
-    # logger.info(f"OpenRouter response: {result}")
+    # logger.info(f"AI response: {result}")
     analysis_json_str = result["choices"][0]["message"]["content"]
-    logger.info(f"OpenRouter raw JSON string response: {analysis_json_str}")
+    logger.info(f"AI raw JSON string response: {analysis_json_str}")
 
     analysis = dict()
 
@@ -367,7 +366,7 @@ def process_ai_report_analysis(report_id: int) -> None:
                     logger.info(f"Barangay with ID {analysis["barangay_id"]} found, proceeding with thematic analysis update...")
                     barangay.report_themes = []
                     for theme in analysis["updated_barangay_themes"]:
-                        if not theme.get("title") or theme.get("codes"):
+                        if not theme.get("title") or not theme.get("codes"):
                             continue
                         barangay.report_themes.append(theme)
                     session.add(barangay)
@@ -411,7 +410,7 @@ def process_ai_report_analysis(report_id: int) -> None:
             if isinstance(analysis.get("report_analysis"), str):
                 report.report_summary = analysis["report_analysis"]
                 report_updated = True
-            if isinstance(analysis.get("report_themes"), str):
+            if isinstance(analysis.get("report_themes"), list):
                 report.report_themes = []
                 for theme in analysis["report_themes"]:
                     if not theme.get("title") or not theme.get("codes"):
