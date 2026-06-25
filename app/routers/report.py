@@ -71,14 +71,27 @@ async def create_report(
     finally:
         await image.close()
 
+    barangay_id = report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude)
+
+    from app.services.geocoding import reverse_geocode
+    address = reverse_geocode(form_data.latitude, form_data.longitude)
+    if not address:
+        if barangay_id:
+            barangay = session.get(Barangay, barangay_id)
+            if barangay:
+                address = f"Barangay {barangay.name}, Philippines"
+        if not address:
+            address = "Unknown Address"
+
     report = Report(
         type=form_data.type,
         notes=form_data.notes,
         latitude=form_data.latitude,
         longitude=form_data.longitude,
+        address=address,
         report_themes=[],
         reported_by_user_id=reported_by_user_id,
-        under_barangay_id=report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude),
+        under_barangay_id=barangay_id,
         image_url=f"static/uploads/{unique_filename}",
         is_collected=False,
         date_reported=datetime.utcnow()
@@ -141,12 +154,51 @@ def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency)
 
     return stats
 
+@router.get("/reports/geocode/reverse", response_model=dict[str, str])
+def get_address_from_coordinates(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180)
+) -> dict[str, str]:
+    from app.services.geocoding import reverse_geocode
+    address = reverse_geocode(latitude, longitude)
+    if not address:
+        raise HTTPException(status_code=400, detail="Failed to reverse geocode coordinates")
+    return {"address": address}
+
 @router.get("/reports/{report_id}", response_model=ReportPublic)
 def get_report(report_id: int, session: SessionDependency) -> ReportPublic:
     report = session.get(Report, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report
+
+@router.get("/reports/{report_id}/address", response_model=dict[str, str])
+def get_report_address(report_id: int, session: SessionDependency) -> dict[str, str]:
+    report = session.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # If address is already saved, return it
+    if report.address:
+        return {"address": report.address}
+    
+    # Otherwise, resolve it now, save it, and return it
+    from app.services.geocoding import reverse_geocode
+    address = reverse_geocode(report.latitude, report.longitude)
+    if not address:
+        if report.under_barangay_id:
+            barangay = session.get(Barangay, report.under_barangay_id)
+            if barangay:
+                address = f"Barangay {barangay.name}, Philippines"
+        if not address:
+            address = "Unknown Address"
+            
+    report.address = address
+    session.add(report)
+    session.commit()
+    session.refresh(report)
+    
+    return {"address": address}
 
 @router.get("/reports/user/{user_id}", response_model=list[ReportPublic])
 def get_reports_from_user(user_id: int, session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[ReportPublic]:

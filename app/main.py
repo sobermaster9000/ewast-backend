@@ -34,6 +34,8 @@ app.include_router(assignment_router, prefix="/api", tags=["assignment"])
 
 @app.on_event("startup")
 def on_startup():
+    database.init_db_and_tables()
+    database.add_address_column_if_not_exists()
     database.init_barangays_table()
 
 @app.get("/")

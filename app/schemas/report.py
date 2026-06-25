@@ -26,6 +26,7 @@ class ReportBase(SQLModel):
     notes: str | None = Field(default=None)
     latitude: float = Field(sa_column_args=[CheckConstraint("-90 <= latitude AND latitude <= 90")])
     longitude: float = Field(sa_column_args=[CheckConstraint("-180 <= longitude AND longitude <= 180")])
+    address: str | None = Field(default=None)
 
 # standard report model to be stored in database
 class Report(ReportBase, table=True):

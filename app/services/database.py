@@ -3,7 +3,7 @@ import json
 
 from typing import Annotated
 from fastapi import Depends
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, SQLModel, create_engine, select, text
 
 from app.schemas import Barangay
 from app.config import settings
@@ -42,6 +42,16 @@ SessionDependency = Annotated[Session, Depends(get_session)]
 def init_db_and_tables() -> None:
     logger.info("Creating database tables...")
     SQLModel.metadata.create_all(db_engine)
+
+def add_address_column_if_not_exists() -> None:
+    logger.info("Checking/adding address column in reports table...")
+    with Session(db_engine) as session:
+        try:
+            session.execute(text("ALTER TABLE reports ADD COLUMN address VARCHAR;"))
+            session.commit()
+            logger.info("Successfully added address column to reports table.")
+        except Exception as error:
+            logger.info(f"Could not add address column (it may already exist or table is not created yet): {error}")
 
 def init_barangays_table() -> None:
     logger.info("Initializing barangays table...")
