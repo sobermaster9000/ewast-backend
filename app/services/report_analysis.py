@@ -2,6 +2,7 @@ import base64
 import requests
 import json
 import os
+import sys
 
 from fastapi import HTTPException
 from typing import Any
@@ -157,9 +158,10 @@ def get_report_themes(barangay_id: int = 0) -> list[Theme]:
         if barangay_id:
             barangay = session.get(Barangay, barangay_id)
             if barangay:
-                return barangay.report_themes
-            else:
-                return []
+                themes = []
+                for theme in barangay.report_themes:
+                    themes.append(Theme(title=theme.get("title", ""), codes=theme.get("codes", [])))
+                return themes
         else:
             summary = session.exec(select(Summary)).first()
             if not summary:
@@ -167,7 +169,10 @@ def get_report_themes(barangay_id: int = 0) -> list[Theme]:
                 session.add(summary)
                 session.commit()
                 session.refresh(summary)
-            return summary.general_themes
+            themes = []
+            for theme in summary.general_themes:
+                themes.append(Theme(title=theme.get("title", ""), codes=theme.get("codes", [])))
+            return themes
 
 def get_barangay_report_analysis(barangay_id: int) -> str:
     with Session(db_engine) as session:
@@ -187,13 +192,17 @@ def get_general_report_analysis() -> str:
         return summary.general_summary if summary.general_summary else ""
 
 def get_barangay_themes(barangay_id: int) -> list[Theme]:
+    themes = []
     with Session(db_engine) as session:
         barangay = session.get(Barangay, barangay_id)
         if not barangay:
             raise Exception(f"Barangay with ID {barangay_id} not found")
-        return barangay.report_themes
+        for theme in barangay.report_themes:
+            themes.append(Theme(title=theme.get("title", ""), codes=theme.get("codes", [])))
+    return themes
 
 def get_general_themes() -> list[Theme]:
+    themes = []
     with Session(db_engine) as session:
         summary = session.exec(select(Summary)).first()
         if not summary:
@@ -201,7 +210,9 @@ def get_general_themes() -> list[Theme]:
             session.add(summary)
             session.commit()
             session.refresh(summary)
-        return summary.general_themes
+        for theme in summary.general_themes:
+            themes.append(Theme(title=theme.get("title", ""), codes=theme.get("codes", [])))
+    return themes
 
 def get_barangay_id_of_loc(latitude: float, longitude: float) -> int:
     report_point = Point(longitude, latitude)
@@ -356,11 +367,9 @@ def process_ai_report_analysis(report_id: int) -> None:
                     logger.info(f"Barangay with ID {analysis["barangay_id"]} found, proceeding with thematic analysis update...")
                     barangay.report_themes = []
                     for theme in analysis["updated_barangay_themes"]:
-                        title = theme.get("title", "")
-                        codes = theme.get("codes", [])
-                        if not title or not codes:
+                        if not theme.get("title") or theme.get("codes"):
                             continue
-                        barangay.report_themes.append(Theme(title=title, codes=codes))
+                        barangay.report_themes.append(theme)
                     session.add(barangay)
                     session.commit()
                     logger.info(f"Completed thematic analysis update of barangay with ID {analysis["barangay_id"]}")
@@ -388,11 +397,9 @@ def process_ai_report_analysis(report_id: int) -> None:
                     summary = Summary(general_themes=[])
                 summary.general_themes = []
                 for theme in analysis["updated_overall_themes"]:
-                    title = theme.get("title", "")
-                    codes = theme.get("codes", [])
-                    if not title or not codes:
+                    if not theme.get("title") or not theme.get("codes"):
                         continue
-                    summary.general_themes.append(Theme(title=title, codes=codes))
+                    summary.general_themes.append(theme)
                 session.add(summary)
                 session.commit()
                 logger.info("Completed thematic analysis update of overall report thematic analysis")
@@ -407,11 +414,9 @@ def process_ai_report_analysis(report_id: int) -> None:
             if isinstance(analysis.get("report_themes"), str):
                 report.report_themes = []
                 for theme in analysis["report_themes"]:
-                    title = theme.get("title", "")
-                    codes = theme.get("codes", [])
-                    if not title or not codes:
+                    if not theme.get("title") or not theme.get("codes"):
                         continue
-                    report.report_themes.append(Theme(title=title, codes=codes))
+                    report.report_themes.append(theme)
                 report_updated = True
 
             if report_updated:
@@ -421,4 +426,5 @@ def process_ai_report_analysis(report_id: int) -> None:
             logger.info(f"Finished processing analysis of report with ID {report_id}")
 
         except Exception as error:
-            logger.fatal(f"An error occured while processing the AI report analysis: {error}")
+            traceback = sys.exc_info()[2]
+            logger.fatal(f"An error occured while processing the AI report analysis: {error} @ line {traceback.tb_lineno}")
