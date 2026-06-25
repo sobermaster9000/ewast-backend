@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlmodel import Session, select, text
 
-from app.schemas import ReportType, Report, Barangay, Summary, ReportCount, ReportTypeFreq
+from app.schemas import ReportType, Report, Barangay, Summary, ReportCount, ReportTypeFreq, Theme
 from app.services.database import db_engine
 from app.config import settings
 
@@ -84,7 +84,7 @@ def get_report_type_freq(barangay_id: int = 0) -> list[ReportTypeFreq]:
             ))
         return report_type_freqs
 
-def get_report_themes(barangay_id: int = 0) -> list[str]:
+def get_report_themes(barangay_id: int = 0) -> list[Theme]:
     with Session(db_engine) as session:
         if barangay_id:
             barangay = session.get(Barangay, barangay_id)
@@ -118,14 +118,14 @@ def get_general_report_analysis() -> str:
             session.refresh(summary)
         return summary.general_summary if summary.general_summary else ""
 
-def get_barangay_themes(barangay_id: int) -> list[str]:
+def get_barangay_themes(barangay_id: int) -> list[Theme]:
     with Session(db_engine) as session:
         barangay = session.get(Barangay, barangay_id)
         if not barangay:
             raise Exception(f"Barangay with ID {barangay_id} not found")
         return barangay.report_themes
 
-def get_general_themes() -> list[str]:
+def get_general_themes() -> list[Theme]:
     with Session(db_engine) as session:
         summary = session.exec(select(Summary)).first()
         if not summary:
@@ -148,7 +148,7 @@ def get_barangay_id_of_loc(latitude: float, longitude: float) -> int:
                 return barangay.barangay_id
     return 0
 
-def analyze_garbage_report(report: Report) -> dict[str, str | int]:
+def analyze_garbage_report(report: Report) -> dict[str, Any]:
     report_type = report.type
     report_notes = report.notes
     report_image_url = report.image_url
@@ -179,7 +179,9 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
     barangay_themes = []
     try:
         barangay_analysis = get_barangay_report_analysis(barangay_id)
-        barangay_themes = get_barangay_themes(barangay_id)
+        _barangay_themes = get_barangay_themes(barangay_id)
+        for theme in _barangay_themes:
+            barangay_themes.append(dict(theme))
     except Exception as error:
         logger.warning(f"Could not retrieve barangay analysis of barangay with id {barangay_id}\nError: {error}")
 
@@ -187,7 +189,9 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
     overall_themes = []
     try:
         overall_analysis = get_general_report_analysis()
-        overall_themes = get_general_themes()
+        _overall_themes = get_general_themes()
+        for theme in _overall_themes:
+            overall_themes.append(dict(theme))
     except Exception as error:
         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
 
@@ -343,7 +347,13 @@ def process_ai_report_analysis(report_id: int) -> None:
                 barangay = session.get(Barangay, analysis["barangay_id"])
                 if barangay:
                     logger.info(f"Barangay with ID {analysis["barangay_id"]} found, proceeding with thematic analysis update...")
-                    barangay.report_themes = analysis["updated_barangay_themes"]
+                    barangay.report_themes = []
+                    for theme in analysis["updated_barangay_themes"]:
+                        title = theme.get("title", "")
+                        codes = theme.get("codes", [])
+                        if not title or not codes:
+                            continue
+                        barangay.report_themes.append(Theme(title=title, codes=codes))
                     session.add(barangay)
                     session.commit()
                     logger.info(f"Completed thematic analysis update of barangay with ID {analysis["barangay_id"]}")
@@ -369,7 +379,13 @@ def process_ai_report_analysis(report_id: int) -> None:
                 if not summary:
                     logger.info("Overall summary not initialized yet, proceeding with initialization...")
                     summary = Summary(general_themes=[])
-                summary.general_themes = analysis["updated_overall_themes"]
+                summary.general_themes = []
+                for theme in analysis["updated_overall_themes"]:
+                    title = theme.get("title", "")
+                    codes = theme.get("codes", [])
+                    if not title or not codes:
+                        continue
+                    summary.general_themes.append(Theme(title=title, codes=codes))
                 session.add(summary)
                 session.commit()
                 logger.info("Completed thematic analysis update of overall report thematic analysis")
@@ -382,7 +398,13 @@ def process_ai_report_analysis(report_id: int) -> None:
                 report.report_summary = analysis["report_analysis"]
                 report_updated = True
             if isinstance(analysis.get("report_themes"), str):
-                report.report_themes = analysis["report_themes"]
+                report.report_themes = []
+                for theme in analysis["report_themes"]:
+                    title = theme.get("title", "")
+                    codes = theme.get("codes", [])
+                    if not title or not codes:
+                        continue
+                    report.report_themes.append(Theme(title=title, codes=codes))
                 report_updated = True
 
             if report_updated:
