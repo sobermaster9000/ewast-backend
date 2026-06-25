@@ -192,7 +192,7 @@ def analyze_garbage_report(report: Report) -> dict[str, str | int]:
         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
 
     prompt = f"""\
-You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its specific thematic issues, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
+You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its specific thematic issues along with descriptive qualitative codes, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
 
 ---
 INPUT CONTEXT:
@@ -217,19 +217,19 @@ CRITICAL PROCESSING INSTRUCTIONS:
 
 2. INDIVIDUAL REPORT ANALYSIS & THEME EXTRACTION:
     - Synthesize the available data inputs. If an image is provided but does not contain uncollected garbage, explicitly state "INVALID REPORT: Image does not depict uncollected waste." Max limit: 5 sentences.
-    - Extract 1 to 3 concise, high-level themes from this specific report (e.g., "Public Health Risk", "Market Day Waste Surge", "Electronic Waste Contamination", "Blocked Waterways"). These will be returned directly in the `report_themes` array.
+    - Extract 1 to 3 structured themes from this specific report. Each theme must be an object containing a broad "title" (e.g., "Public Health Risk") and an array of specific, granular "codes" derived from the raw text/image data (e.g., ["odors", "swarming-flies", "vermin-sighting"]). These will be returned directly in the `report_themes` array.
 
 3. BARANGAY ANALYSIS & THEMATIC UPDATE:
     - ANALYSIS: Evaluate the existing Barangay Analysis string. If cold starting (empty or placeholder), generate a foundational summary. If updating, integrate new trends if they alter urgency or hazard profiles; otherwise, retain existing text. Max limit: 5 sentences.
-    - THEMES UPDATE: Evaluate the extracted report themes against the `Existing Barangay Themes` list.
-        - If an extracted theme introduces a conceptually NEW localized issue, append it to the list.
-        - If it is conceptually similar or identical to an existing theme (e.g., "Drainage Clog" vs "Blocked Culverts"), DO NOT duplicate or add it. Retain the existing theme list exactly.
+    - THEMES UPDATE: Evaluate the extracted report themes against the `Existing Barangay Themes` objects.
+        - If an extracted theme's title is conceptually NEW to the Barangay, append the whole object (title and codes) to the list.
+        - If the theme's title is conceptually similar or identical to an existing theme title, DO NOT add a duplicate theme object. Instead, merge any NEW unique codes into that existing theme's "codes" array, keeping the codes deduplicated.
 
 4. CITY-WIDE OVERALL ANALYSIS & THEMATIC UPDATE:
     - ANALYSIS: Evaluate the existing City-Wide Analysis string. If cold starting, generate a foundational city summary. If updating, modify it if the updated Barangay tracking introduces macro municipal priorities (e.g., city-wide flooding risks, institutional collection failures). Max limit: 5 sentences.
-    - THEMES UPDATE: Evaluate the updated Barangay themes against the `Existing City-Wide Overall Themes` list.
-        - If a theme represents a distinct, macro-level systemic trend affecting multiple regions, append it to the city-wide list.
-        - If it is redundant, highly similar, or too hyper-localized to matter at a city scale, DO NOT modify the list.
+    - THEMES UPDATE: Evaluate the updated Barangay themes against the `Existing City-Wide Overall Themes` objects.
+        - If a theme title represents a distinct, macro-level systemic trend affecting multiple regions, append the object to the city-wide list.
+        - If the theme title already exists, merge any new systemic codes into its existing "codes" array. If it is redundant or too hyper-localized to matter at a city scale, DO NOT modify the list.
 
 ---
 OUTPUT FORMAT:
@@ -237,11 +237,26 @@ You must return a raw, syntactically valid JSON object matching the schema below
 
 {{
     "report_analysis": "String containing individual report analysis or fallback text.",
-    "report_themes": ["Array", "of", "strings", "extracted", "specifically", "from", "this", "single", "report"],
+    "report_themes": [
+        {{
+            "title": "Theme Title Here",
+            "codes": ["code1", "code2", "code3"]
+        }}
+    ],
     "updated_barangay_analysis": "String containing the initial or updated barangay tracking analysis.",
-    "updated_barangay_themes": ["Array", "of", "strings", "representing", "the", "deduplicated", "barangay", "themes"],
+    "updated_barangay_themes": [
+        {{
+            "title": "Theme Title Here",
+            "codes": ["code1", "code2", "code3"]
+        }}
+    ],
     "updated_overall_analysis": "String containing the initial or updated city-wide tracking analysis.",
-    "updated_overall_themes": ["Array", "of", "strings", "representing", "the", "deduplicated", "city", "wide", "themes"]
+    "updated_overall_themes": [
+        {{
+            "title": "Theme Title Here",
+            "codes": ["code1", "code2", "code3"]
+        }}
+    ]
 }}"""
 
     payload = {
