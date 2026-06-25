@@ -23,6 +23,74 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+PROMPT_TEMPLATE = """\
+You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its specific thematic issues along with descriptive qualitative codes, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
+
+---
+INPUT CONTEXT:
+1. Predetermined Report Type: "{report_type}"
+2. Citizen-provided Notes (Read and translate any Tagalog, Bisaya, Cebuano, or other local Filipino dialects into English):
+"{report_notes}"
+3. Associated Image: (An attached multimodal image of the site, which may be absent or blank)
+
+---
+CURRENT HISTORICAL STATE:
+1. Existing Barangay Analysis: "{barangay_analysis}"
+2. Existing Barangay Themes: {barangay_themes}
+3. Existing City-Wide Overall Analysis: "{overall_analysis}"
+4. Existing City-Wide Overall Themes: {overall_themes}
+
+---
+CRITICAL PROCESSING INSTRUCTIONS:
+1. DATA AVAILABILITY EVALUATION (PRE-ANALYSIS):
+    - If BOTH the report notes are empty/blank AND no image is present: Skip visual/textual evaluation. Your individual report analysis MUST state: "Report processed based solely on category metadata: {{report type}}."
+    - If the image is PRESENT but the report notes are empty/blank: Base your analysis entirely on visual evidence from the image and the predetermined report type.
+    - If the report notes are PRESENT but the image is missing/absent: Base your analysis entirely on the contextual data from the translated notes and the predetermined report type. Do not mention missing image context as an error; simply analyze the text.
+
+2. INDIVIDUAL REPORT ANALYSIS & THEME EXTRACTION:
+    - Synthesize the available data inputs. If an image is provided but does not contain uncollected garbage, explicitly state "INVALID REPORT: Image does not depict uncollected waste." Max limit: 5 sentences.
+    - Extract 1 to 3 structured themes from this specific report. Each theme must be an object containing a broad "title" (e.g., "Public Health Risk") and an array of specific, granular "codes" derived from the raw text/image data (e.g., ["odors", "swarming-flies", "vermin-sighting"]). These will be returned directly in the `report_themes` array.
+
+3. BARANGAY ANALYSIS & THEMATIC UPDATE:
+    - ANALYSIS: Evaluate the existing Barangay Analysis string. If cold starting (empty or placeholder), generate a foundational summary. If updating, integrate new trends if they alter urgency or hazard profiles; otherwise, retain existing text. Max limit: 5 sentences.
+    - THEMES UPDATE: Evaluate the extracted report themes against the `Existing Barangay Themes` objects.
+        - If an extracted theme's title is conceptually NEW to the Barangay, append the whole object (title and codes) to the list.
+        - If the theme's title is conceptually similar or identical to an existing theme title, DO NOT add a duplicate theme object. Instead, merge any NEW unique codes into that existing theme's "codes" array, keeping the codes deduplicated.
+
+4. CITY-WIDE OVERALL ANALYSIS & THEMATIC UPDATE:
+    - ANALYSIS: Evaluate the existing City-Wide Analysis string. If cold starting, generate a foundational city summary. If updating, modify it if the updated Barangay tracking introduces macro municipal priorities (e.g., city-wide flooding risks, institutional collection failures). Max limit: 5 sentences.
+    - THEMES UPDATE: Evaluate the updated Barangay themes against the `Existing City-Wide Overall Themes` objects.
+        - If a theme title represents a distinct, macro-level systemic trend affecting multiple regions, append the object to the city-wide list.
+        - If the theme title already exists, merge any new systemic codes into its existing "codes" array. If it is redundant or too hyper-localized to matter at a city scale, DO NOT modify the list.
+
+---
+OUTPUT FORMAT:
+You must return a raw, syntactically valid JSON object matching the schema below. Do not wrap it in markdown block tags (like ```json), do not include trailing commas, and provide no conversational prose before or after the JSON.
+
+{{
+    "report_analysis": "String containing individual report analysis or fallback text.",
+    "report_themes": [
+        {{
+            "title": "Theme Title Here",
+            "codes": ["code1", "code2", "code3"]
+        }}
+    ],
+    "updated_barangay_analysis": "String containing the initial or updated barangay tracking analysis.",
+    "updated_barangay_themes": [
+        {{
+            "title": "Theme Title Here",
+            "codes": ["code1", "code2", "code3"]
+        }}
+    ],
+    "updated_overall_analysis": "String containing the initial or updated city-wide tracking analysis.",
+    "updated_overall_themes": [
+        {{
+            "title": "Theme Title Here",
+            "codes": ["code1", "code2", "code3"]
+        }}
+    ]
+}}"""
+
 def get_report_count(barangay_id: int = 0) -> int:
     with Session(db_engine) as session:
         query = text("SELECT COUNT(*) as report_count FROM reports")
@@ -167,7 +235,6 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
             image_data_url = f"data:image/{file_extension};base64,{image_encoded_string}"
             logger.info(f"Image encoded into url with .{file_extension} file extension and {len(image_encoded_string)} characters encoded")
         except:
-            # raise HTTPException(status_code=500, detail="Failed to read image for AI analysis")
             raise Exception(f"Failed to read image {report_image_url} for AI analysis")
 
     if not report_notes:
@@ -195,73 +262,14 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
     except Exception as error:
         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
 
-    prompt = f"""\
-You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its specific thematic issues along with descriptive qualitative codes, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
-
----
-INPUT CONTEXT:
-1. Predetermined Report Type: "{report_type.value}"
-2. Citizen-provided Notes (Read and translate any Tagalog, Bisaya, Cebuano, or other local Filipino dialects into English):
-"{report_notes}"
-3. Associated Image: (An attached multimodal image of the site, which may be absent or blank)
-
----
-CURRENT HISTORICAL STATE:
-1. Existing Barangay Analysis: "{barangay_analysis}"
-2. Existing Barangay Themes: {barangay_themes}
-3. Existing City-Wide Overall Analysis: "{overall_analysis}"
-4. Existing City-Wide Overall Themes: {overall_themes}
-
----
-CRITICAL PROCESSING INSTRUCTIONS:
-1. DATA AVAILABILITY EVALUATION (PRE-ANALYSIS):
-    - If BOTH the report notes are empty/blank AND no image is present: Skip visual/textual evaluation. Your individual report analysis MUST state: "Report processed based solely on category metadata: {{report type}}."
-    - If the image is PRESENT but the report notes are empty/blank: Base your analysis entirely on visual evidence from the image and the predetermined report type.
-    - If the report notes are PRESENT but the image is missing/absent: Base your analysis entirely on the contextual data from the translated notes and the predetermined report type. Do not mention missing image context as an error; simply analyze the text.
-
-2. INDIVIDUAL REPORT ANALYSIS & THEME EXTRACTION:
-    - Synthesize the available data inputs. If an image is provided but does not contain uncollected garbage, explicitly state "INVALID REPORT: Image does not depict uncollected waste." Max limit: 5 sentences.
-    - Extract 1 to 3 structured themes from this specific report. Each theme must be an object containing a broad "title" (e.g., "Public Health Risk") and an array of specific, granular "codes" derived from the raw text/image data (e.g., ["odors", "swarming-flies", "vermin-sighting"]). These will be returned directly in the `report_themes` array.
-
-3. BARANGAY ANALYSIS & THEMATIC UPDATE:
-    - ANALYSIS: Evaluate the existing Barangay Analysis string. If cold starting (empty or placeholder), generate a foundational summary. If updating, integrate new trends if they alter urgency or hazard profiles; otherwise, retain existing text. Max limit: 5 sentences.
-    - THEMES UPDATE: Evaluate the extracted report themes against the `Existing Barangay Themes` objects.
-        - If an extracted theme's title is conceptually NEW to the Barangay, append the whole object (title and codes) to the list.
-        - If the theme's title is conceptually similar or identical to an existing theme title, DO NOT add a duplicate theme object. Instead, merge any NEW unique codes into that existing theme's "codes" array, keeping the codes deduplicated.
-
-4. CITY-WIDE OVERALL ANALYSIS & THEMATIC UPDATE:
-    - ANALYSIS: Evaluate the existing City-Wide Analysis string. If cold starting, generate a foundational city summary. If updating, modify it if the updated Barangay tracking introduces macro municipal priorities (e.g., city-wide flooding risks, institutional collection failures). Max limit: 5 sentences.
-    - THEMES UPDATE: Evaluate the updated Barangay themes against the `Existing City-Wide Overall Themes` objects.
-        - If a theme title represents a distinct, macro-level systemic trend affecting multiple regions, append the object to the city-wide list.
-        - If the theme title already exists, merge any new systemic codes into its existing "codes" array. If it is redundant or too hyper-localized to matter at a city scale, DO NOT modify the list.
-
----
-OUTPUT FORMAT:
-You must return a raw, syntactically valid JSON object matching the schema below. Do not wrap it in markdown block tags (like ```json), do not include trailing commas, and provide no conversational prose before or after the JSON.
-
-{{
-    "report_analysis": "String containing individual report analysis or fallback text.",
-    "report_themes": [
-        {{
-            "title": "Theme Title Here",
-            "codes": ["code1", "code2", "code3"]
-        }}
-    ],
-    "updated_barangay_analysis": "String containing the initial or updated barangay tracking analysis.",
-    "updated_barangay_themes": [
-        {{
-            "title": "Theme Title Here",
-            "codes": ["code1", "code2", "code3"]
-        }}
-    ],
-    "updated_overall_analysis": "String containing the initial or updated city-wide tracking analysis.",
-    "updated_overall_themes": [
-        {{
-            "title": "Theme Title Here",
-            "codes": ["code1", "code2", "code3"]
-        }}
-    ]
-}}"""
+    prompt = PROMPT_TEMPLATE.format(
+        report_type=report_type.value,
+        report_notes=report_notes,
+        barangay_analysis=barangay_analysis,
+        barangay_themes=barangay_themes,
+        overall_analysis=overall_analysis,
+        overall_themes=overall_themes
+    )
 
     payload = {
         "model": settings.OPENROUTER_MODEL,
@@ -297,7 +305,6 @@ You must return a raw, syntactically valid JSON object matching the schema below
     )
 
     if response.status_code != 200:
-        # raise HTTPException(status_code=502, detail=f"OpenRouter gateway error: {response.text}")
         raise Exception(f"OpenRouter gateway error: {response.text}")
 
     result = response.json()
