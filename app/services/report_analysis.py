@@ -16,6 +16,9 @@ from app.config import settings
 from shapely.geometry import Point, Polygon
 from pyproj import Geod
 
+import boto3
+from botocore.config import Config
+
 import logging
 
 logging.basicConfig(
@@ -23,6 +26,12 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+bedrock = boto3.client(
+    "bedrock-runtime",
+    region_name="ap-southeast-1",
+    config=Config(read_timeout=3600)
+)
 
 PROMPT_TEMPLATE = """\
 You are an expert municipal data analyst and city triage inspector for a Philippine command center. Your task is to analyze an incoming report of uncollected garbage, extract its specific thematic issues along with descriptive qualitative codes, and sequentially update rolling contextual summaries and systemic themes for both its corresponding Barangay (neighborhood) and the City-wide Overall system.
@@ -231,46 +240,34 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
     report_notes = report.notes
     report_image_url = report.image_url
 
-    if report_notes is None and report_image_url is None:
+    if not report.notes and not report.image_url:
         raise Exception("No report notes or image to proceed with analysis")
 
-    image_data_url = ""
-    image_encoded_string = ""
-
+    # when using s3, remove byte reading and pass asset link directly
+    data_format = ""
+    report_image_bytes = b""
     if report_image_url:
-        try:
-            with open(report_image_url, "rb") as file:
-                image_encoded_string = base64.b64encode(file.read()).decode("utf-8")
-            file_extension = os.path.splitext(report_image_url)[1][1:]
-            image_data_url = f"data:image/{file_extension};base64,{image_encoded_string}"
-            logger.info(f"Image encoded into url with .{file_extension} file extension and {len(image_encoded_string)} characters encoded")
-        except:
-            raise Exception(f"Failed to read image {report_image_url} for AI analysis")
+        logging.info("Image url present, reading image...")
+        with open(report_image_url, "rb") as file:
+            report_image_bytes = file.read()
+        data_format = os.path.splitext(report_image_url)[1][1:]
 
     if not report_notes:
-        report_notes = ""
+       report_notes = ""
 
     barangay_id = report.under_barangay_id
 
-    barangay_analysis = ""
+    barangay_analysis = get_barangay_report_analysis(barangay_id)
     barangay_themes = []
-    try:
-        barangay_analysis = get_barangay_report_analysis(barangay_id)
-        _barangay_themes = get_barangay_themes(barangay_id)
-        for theme in _barangay_themes:
-            barangay_themes.append(dict(theme))
-    except Exception as error:
-        logger.warning(f"Could not retrieve barangay analysis of barangay with id {barangay_id}\nError: {error}")
+    _barangay_themes = get_barangay_themes(barangay_id)
+    for theme in _barangay_themes:
+        barangay_themes.append(dict(theme))
 
-    overall_analysis = ""
+    overall_analysis = get_general_report_analysis()
     overall_themes = []
-    try:
-        overall_analysis = get_general_report_analysis()
-        _overall_themes = get_general_themes()
-        for theme in _overall_themes:
-            overall_themes.append(dict(theme))
-    except Exception as error:
-        logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
+    _overall_themes = get_general_themes()
+    for theme in _overall_themes:
+        overall_themes.append(dict(theme))
 
     prompt = PROMPT_TEMPLATE.format(
         report_type=report_type.value,
@@ -281,58 +278,153 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
         overall_themes=overall_themes
     )
 
-    payload = {
-        "model": settings.OPENROUTER_MODEL,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    }
-                ]
-            }
-        ]
-    }
+    messages = [
+        {
+            "role": "user",
+            "content": []
+        }
+    ]
 
-    if image_data_url:
-        payload["messages"][0]["content"].append({
-            "type": "image_url",
-            "image_url": {
-                "url": image_data_url
+    if report_image_bytes:
+        messages[0]["content"].append({
+            "image": {
+                "format": "jpeg",
+                "source": {
+                    "bytes": report_image_bytes
+                }
             }
         })
-        logger.info("Image data url is present, appending to payload...")
 
-    response = requests.post(
-        url=settings.OPENROUTER_API_ENDPOINT,
-        headers={
-            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        data=json.dumps(payload)
+    messages[0]["content"].append({
+        "text": prompt
+    })
+
+    response = bedrock.converse(
+        modelId="global.amazon.nova-2-lite-v1:0",
+        messages=messages
     )
 
-    if response.status_code != 200:
-        raise Exception(f"OpenRouter gateway error: {response.text}")
+    analysis = ""
+    for content in response["output"]["message"]["content"]:
+        if "text" in content:
+            analysis += content["text"]
 
-    result = response.json()
-    # logger.info(f"AI response: {result}")
-    analysis_json_str = result["choices"][0]["message"]["content"]
-    logger.info(f"AI raw JSON string response: {analysis_json_str}")
+    analysis = analysis.replace("```json", "").replace("```", "").strip()
+    analysis_json = json.loads(analysis)
 
-    analysis = dict()
+    logger.info(f"Analysis output: {analysis}")
 
-    try:
-        clean_json_string = analysis_json_str.replace("```json", "").replace("```", "").strip()
-        analysis = json.loads(clean_json_string)
-    except:
-        raise Exception("Could not parse AI report analysis")
+    analysis_json["barangay_id"] = barangay_id
 
-    analysis["barangay_id"] = barangay_id
+    return analysis_json
 
-    return analysis
+# def analyze_garbage_report(report: Report) -> dict[str, Any]:
+#     report_type = report.type
+#     report_notes = report.notes
+#     report_image_url = report.image_url
+#
+#     if report_notes is None and report_image_url is None:
+#         raise Exception("No report notes or image to proceed with analysis")
+#
+#     image_data_url = ""
+#     image_encoded_string = ""
+#
+#     if report_image_url:
+#         try:
+#             with open(report_image_url, "rb") as file:
+#                 image_encoded_string = base64.b64encode(file.read()).decode("utf-8")
+#             file_extension = os.path.splitext(report_image_url)[1][1:]
+#             image_data_url = f"data:image/{file_extension};base64,{image_encoded_string}"
+#             logger.info(f"Image encoded into url with .{file_extension} file extension and {len(image_encoded_string)} characters encoded")
+#         except:
+#             raise Exception(f"Failed to read image {report_image_url} for AI analysis")
+#
+#     if not report_notes:
+#         report_notes = ""
+#
+#     barangay_id = report.under_barangay_id
+#
+#     barangay_analysis = ""
+#     barangay_themes = []
+#     try:
+#         barangay_analysis = get_barangay_report_analysis(barangay_id)
+#         _barangay_themes = get_barangay_themes(barangay_id)
+#         for theme in _barangay_themes:
+#             barangay_themes.append(dict(theme))
+#     except Exception as error:
+#         logger.warning(f"Could not retrieve barangay analysis of barangay with id {barangay_id}\nError: {error}")
+#
+#     overall_analysis = ""
+#     overall_themes = []
+#     try:
+#         overall_analysis = get_general_report_analysis()
+#         _overall_themes = get_general_themes()
+#         for theme in _overall_themes:
+#             overall_themes.append(dict(theme))
+#     except Exception as error:
+#         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
+#
+#     prompt = PROMPT_TEMPLATE.format(
+#         report_type=report_type.value,
+#         report_notes=report_notes,
+#         barangay_analysis=barangay_analysis,
+#         barangay_themes=barangay_themes,
+#         overall_analysis=overall_analysis,
+#         overall_themes=overall_themes
+#     )
+#
+#     payload = {
+#         "model": settings.OPENROUTER_MODEL,
+#         "messages": [
+#             {
+#                 "role": "user",
+#                 "content": [
+#                     {
+#                         "type": "text",
+#                         "text": prompt
+#                     }
+#                 ]
+#             }
+#         ]
+#     }
+#
+#     if image_data_url:
+#         payload["messages"][0]["content"].append({
+#             "type": "image_url",
+#             "image_url": {
+#                 "url": image_data_url
+#             }
+#         })
+#         logger.info("Image data url is present, appending to payload...")
+#
+#     response = requests.post(
+#         url=settings.OPENROUTER_API_ENDPOINT,
+#         headers={
+#             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+#             "Content-Type": "application/json"
+#         },
+#         data=json.dumps(payload)
+#     )
+#
+#     if response.status_code != 200:
+#         raise Exception(f"OpenRouter gateway error: {response.text}")
+#
+#     result = response.json()
+#     # logger.info(f"AI response: {result}")
+#     analysis_json_str = result["choices"][0]["message"]["content"]
+#     logger.info(f"AI raw JSON string response: {analysis_json_str}")
+#
+#     analysis = dict()
+#
+#     try:
+#         clean_json_string = analysis_json_str.replace("```json", "").replace("```", "").strip()
+#         analysis = json.loads(clean_json_string)
+#     except:
+#         raise Exception("Could not parse AI report analysis")
+#
+#     analysis["barangay_id"] = barangay_id
+#
+#     return analysis
 
 # this function calls the previous function and is designed to be
 # run as a backgorund task in order to be non-blocking for report uploads

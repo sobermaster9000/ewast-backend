@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -12,6 +13,8 @@ class Settings(BaseSettings):
     OPENROUTER_API_ENDPOINT: str
     OPENROUTER_API_KEY: str
 
+    AWS_BEARER_TOKEN_BEDROCK: str
+
     HASHING_ITERATIONS: int
     JWT_SIGNATURE: str
     TOKEN_EXPIRY_HOURS: int
@@ -25,3 +28,5 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+os.environ["AWS_BEARER_TOKEN_BEDROCK"] = settings.AWS_BEARER_TOKEN_BEDROCK
