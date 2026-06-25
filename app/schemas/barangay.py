@@ -2,6 +2,8 @@
 
 from sqlmodel import SQLModel, Field
 from sqlalchemy import Column, JSON
+from .summary import Theme
+from typing import Any
 
 # base barangay class
 class BarangayBase(SQLModel):
@@ -14,7 +16,7 @@ class Barangay(BarangayBase, table=True):
 
     barangay_id: int = Field(primary_key=True)
     report_summary: str | None = Field(default=None)
-    report_themes: list[str] = Field(sa_column=Column(JSON, default=[]))
+    report_themes: list[dict[str, Any]] = Field(sa_column=Column(JSON, default=[]))
 
 # public barangay model to be returned in API calls
 class BarangayPublic(BarangayBase):

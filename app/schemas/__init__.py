@@ -4,6 +4,6 @@ from .route import RouteBase, Route, RoutePublic, RouteCreate, Location, RouteTr
 from .barangay import BarangayBase, Barangay, BarangayPublic, BarangayCreate
 from .assignment import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate
 from .announcements import AnnouncementBase, Announcement, AnnouncementPublic, AnnouncementCreate, AnnouncementFormFields
-from .summary import Summary, GeneralSummary, BarangaySummary
+from .summary import Theme, Summary, GeneralSummary, BarangaySummary
 from .statistics import ReportCount, ReportTypeFreq, BarangayStatistics, Statistics
 from .misc import Detail

@@ -1,10 +1,12 @@
 from pydantic import BaseModel
 from datetime import datetime
-# from typing import Optional
+from typing import Any
 from enum import Enum
 
 from sqlmodel import SQLModel, Field
 from sqlalchemy import CheckConstraint, Column, JSON
+
+from .summary import Theme
 
 from fastapi import UploadFile, Form
 
@@ -35,7 +37,7 @@ class Report(ReportBase, table=True):
     report_id: int | None = Field(default=None, primary_key=True)
     image_url: str | None = Field(default=None, max_length=1000)
     report_summary: str | None = Field(default=None)
-    report_themes: list[str] = Field(sa_column=Column(JSON, default=[]))
+    report_themes: list[dict[str, Any]] = Field(sa_column=Column(JSON, default=[]))
     reported_by_user_id: int # manually verify that this exists in `users` table
     under_barangay_id: int
     is_collected: bool = Field(default=False)
@@ -46,7 +48,7 @@ class ReportPublic(ReportBase):
     report_id: int
     image_url: str | None = Field(default=None, max_length=1000)
     report_summary: str | None = Field(default=None)
-    report_themes: list[str] = Field(sa_column=Column(JSON, default=[]))
+    report_themes: list[Theme]
     reported_by_user_id: int # manually verify that this exists in `users` table
     under_barangay_id: int
     is_collected: bool = Field(default=False)
