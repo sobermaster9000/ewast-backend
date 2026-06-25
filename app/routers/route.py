@@ -60,6 +60,11 @@ def create_route_trip(current_user: auth.CurrentUser, session: SessionDependency
     session.refresh(route)
     return route
 
+@router.get("/routes/barangay/{barangay_id}", response_model=list[RoutePublic])
+def get_routes_for_barangay(session: SessionDependency, barangay_id: int) -> list[RoutePublic]:
+    routes = session.exec(select(Route).where(Route.for_barangay_id == barangay_id)).all()
+    return routes
+
 @router.post("/routes/trip/barangay/{barangay_id}", response_model=RoutePublic, status_code=status.HTTP_201_CREATED)
 def create_route_trip_for_barangay(current_user: auth.CurrentUser, session: SessionDependency, trip_request_barangay: RouteTripRequestBarangay) -> RoutePublic:
     if current_user.role != Role.ADMIN:

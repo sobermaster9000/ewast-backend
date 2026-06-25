@@ -27,6 +27,18 @@ def get_pending_reports(session: SessionDependency, offset: int = 0, limit: Anno
 def get_report_types() -> list[str]:
     return [x.value for x in ReportType]
 
+@router.get("/reports/type/{report_type}", response_model=list[ReportPublic])
+def get_reports_by_type(
+    session: SessionDependency,
+    report_type: str,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=50)] = 50
+) -> list[ReportPublic]:
+    if report_type not in [x.value for x in ReportType]:
+        raise HTTPException(status_code=404, detail="Report type not found")
+    reports = session.exec(select(Report).where(Report.type == report_type).offset(offset).limit(limit)).all()
+    return reports
+
 @router.post("/reports/create", response_model=ReportPublic, status_code=status.HTTP_201_CREATED)
 async def create_report(
     current_user: auth.CurrentUser,

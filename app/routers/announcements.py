@@ -25,10 +25,17 @@ def get_announcements(
     announcements = session.exec(select(Announcement).offset(offset).limit(limit)).all()
     return announcements
 
+@router.get("/barangay/{barangay_id}", response_model=list[AnnouncementPublic])
+def get_announcements_for_barangay(
+    session: SessionDependency,
+    barangay_id: int
+) -> list[AnnouncementPublic]:
+    announcements = session.exec(select(Announcement).where(Announcement.under_barangay_id == barangay_id)).all()
+    return announcements
+
 @router.get("/{announcement_id}", response_model=AnnouncementPublic)
 def get_announcement(
     session: SessionDependency,
-    current_user: auth.CurrentActiveUser,
     announcement_id: int
 ) -> AnnouncementPublic:
     announcement = session.get(Announcement, announcement_id)
