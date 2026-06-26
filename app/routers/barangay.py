@@ -30,8 +30,8 @@ def _load_barangay_geojson(barangay_id: int, session: SessionDependency) -> GeoJ
 router = APIRouter()
 
 @router.get("/barangays", response_model=list[BarangayPublic])
-def get_barangays(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[BarangayPublic]:
-    barangays = session.exec(select(Barangay).offset(offset).limit(limit)).all()
+def get_barangays(session: SessionDependency) -> list[BarangayPublic]:
+    barangays = session.exec(select(Barangay)).all()
     return barangays
 
 # @router.post("/barangays/create", response_model=BarangayPublic, status_code=status.HTTP_201_CREATED)
