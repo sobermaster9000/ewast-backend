@@ -80,3 +80,8 @@ class ReportFormFields(BaseModel):
             latitude=latitude,
             longitude=longitude
         )
+
+class ReportLocation(BaseModel):
+    report_id: int
+    latitude: float
+    longitude: float

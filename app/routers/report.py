@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary, Theme, ReportTypeFreq, ReportCount, ReportDensity
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary, Theme, ReportTypeFreq, ReportCount, ReportDensity, ReportLocation
 from app.services.database import SessionDependency
 from app.services import auth
 from app.services import report_analysis
@@ -192,6 +192,18 @@ def get_address_from_coordinates(
     if not address:
         raise HTTPException(status_code=400, detail="Failed to reverse geocode coordinates")
     return {"address": address}
+
+@router.get("/reports/locations", response_model=list[ReportLocation])
+def get_report_locations(session: SessionDependency) -> list[ReportLocation]:
+    reports = session.exec(select(Report)).all()
+    locations = []
+    for report in reports:
+        locations.append(ReportLocation(
+            report_id=report.report_id,
+            latitude=report.latitude,
+            longitude=report.longitude
+        ))
+    return locations
 
 @router.get("/reports/{report_id}", response_model=ReportPublic)
 def get_report(report_id: int, session: SessionDependency) -> ReportPublic:
