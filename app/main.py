@@ -13,8 +13,8 @@ app = FastAPI(
 )
 
 # change to file storage server in productiom
-if not os.path.isdir("static"):
-    os.mkdir("static")
+# if not os.path.isdir("static"):
+#     os.mkdir("static")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # allow React app to fetch data
