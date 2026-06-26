@@ -1,8 +1,8 @@
 # Step 1: Use the official AWS Lambda Python base image instead of slim-linux
 FROM public.ecr.aws/lambda/python:3.12
 
-# Step 2: Inject the official AWS Lambda Web Adapter binary
-COPY --from=public.ecr.aws/awsguru/aws-lambda-web-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+# Step 2: Inject the official AWS Lambda Web Adapter binary (Fixed Repo Name)
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:1.0.1 /lambda-adapter /opt/extensions/lambda-adapter
 
 # Step 3: Set system environment variables to optimize Python inside Docker
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -12,7 +12,6 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /var/task
 
 # Step 4: Install system dependencies (needed for compilation/GIS tools if using Shapely)
-# Note: Lambda base images use 'dnf' (Amazon Linux 2023) instead of 'apt-get'
 RUN dnf update -y && dnf install -y \
     gcc \
     gcc-c++ \
