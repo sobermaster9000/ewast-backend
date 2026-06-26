@@ -1,0 +1,912 @@
+[
+    {
+        "barangay_name": "Baganihan",
+        "risk_score": 36.57,
+        "normalized_risk_score": 1.0
+    },
+    {
+        "barangay_name": "Datu Salumay",
+        "risk_score": 19.82,
+        "normalized_risk_score": 0.54
+    },
+    {
+        "barangay_name": "Bantol",
+        "risk_score": 19.21,
+        "normalized_risk_score": 0.53
+    },
+    {
+        "barangay_name": "Mandug",
+        "risk_score": 15.27,
+        "normalized_risk_score": 0.42
+    },
+    {
+        "barangay_name": "Pangyan",
+        "risk_score": 13.59,
+        "normalized_risk_score": 0.37
+    },
+    {
+        "barangay_name": "Lampianao",
+        "risk_score": 13.29,
+        "normalized_risk_score": 0.36
+    },
+    {
+        "barangay_name": "Talomo River",
+        "risk_score": 13.1,
+        "normalized_risk_score": 0.36
+    },
+    {
+        "barangay_name": "Tigatto",
+        "risk_score": 12.64,
+        "normalized_risk_score": 0.35
+    },
+    {
+        "barangay_name": "Tapak",
+        "risk_score": 10.56,
+        "normalized_risk_score": 0.29
+    },
+    {
+        "barangay_name": "Malamba",
+        "risk_score": 9.86,
+        "normalized_risk_score": 0.27
+    },
+    {
+        "barangay_name": "Gumitan",
+        "risk_score": 9.27,
+        "normalized_risk_score": 0.25
+    },
+    {
+        "barangay_name": "Saloy",
+        "risk_score": 8.83,
+        "normalized_risk_score": 0.24
+    },
+    {
+        "barangay_name": "Salapawan",
+        "risk_score": 8.61,
+        "normalized_risk_score": 0.24
+    },
+    {
+        "barangay_name": "Riverside",
+        "risk_score": 8.57,
+        "normalized_risk_score": 0.23
+    },
+    {
+        "barangay_name": "Magtuod",
+        "risk_score": 8.35,
+        "normalized_risk_score": 0.23
+    },
+    {
+        "barangay_name": "Alejandra Navarro",
+        "risk_score": 8.32,
+        "normalized_risk_score": 0.23
+    },
+    {
+        "barangay_name": "Marilog",
+        "risk_score": 8.14,
+        "normalized_risk_score": 0.22
+    },
+    {
+        "barangay_name": "Calinan",
+        "risk_score": 7.98,
+        "normalized_risk_score": 0.22
+    },
+    {
+        "barangay_name": "Mapula",
+        "risk_score": 7.93,
+        "normalized_risk_score": 0.22
+    },
+    {
+        "barangay_name": "Gatungan",
+        "risk_score": 7.92,
+        "normalized_risk_score": 0.22
+    },
+    {
+        "barangay_name": "Colosas",
+        "risk_score": 7.5,
+        "normalized_risk_score": 0.21
+    },
+    {
+        "barangay_name": "Talomo",
+        "risk_score": 6.92,
+        "normalized_risk_score": 0.19
+    },
+    {
+        "barangay_name": "Pandaitan",
+        "risk_score": 6.87,
+        "normalized_risk_score": 0.19
+    },
+    {
+        "barangay_name": "Toril",
+        "risk_score": 6.46,
+        "normalized_risk_score": 0.18
+    },
+    {
+        "barangay_name": "Atan-Awe",
+        "risk_score": 6.22,
+        "normalized_risk_score": 0.17
+    },
+    {
+        "barangay_name": "Lumiad",
+        "risk_score": 6.17,
+        "normalized_risk_score": 0.17
+    },
+    {
+        "barangay_name": "Sibulan",
+        "risk_score": 5.89,
+        "normalized_risk_score": 0.16
+    },
+    {
+        "barangay_name": "Dalag",
+        "risk_score": 5.85,
+        "normalized_risk_score": 0.16
+    },
+    {
+        "barangay_name": "Sirib",
+        "risk_score": 5.83,
+        "normalized_risk_score": 0.16
+    },
+    {
+        "barangay_name": "Bunawan",
+        "risk_score": 5.82,
+        "normalized_risk_score": 0.16
+    },
+    {
+        "barangay_name": "Wines",
+        "risk_score": 5.58,
+        "normalized_risk_score": 0.15
+    },
+    {
+        "barangay_name": "Matina Crossing",
+        "risk_score": 5.46,
+        "normalized_risk_score": 0.15
+    },
+    {
+        "barangay_name": "Dacudao",
+        "risk_score": 5.42,
+        "normalized_risk_score": 0.15
+    },
+    {
+        "barangay_name": "Angalan",
+        "risk_score": 5.38,
+        "normalized_risk_score": 0.15
+    },
+    {
+        "barangay_name": "Lacson",
+        "risk_score": 5.32,
+        "normalized_risk_score": 0.15
+    },
+    {
+        "barangay_name": "Lizada",
+        "risk_score": 5.11,
+        "normalized_risk_score": 0.14
+    },
+    {
+        "barangay_name": "Buda",
+        "risk_score": 4.96,
+        "normalized_risk_score": 0.14
+    },
+    {
+        "barangay_name": "Tamugan",
+        "risk_score": 4.96,
+        "normalized_risk_score": 0.14
+    },
+    {
+        "barangay_name": "Tawan-Tawan",
+        "risk_score": 4.87,
+        "normalized_risk_score": 0.13
+    },
+    {
+        "barangay_name": "Dalagdag",
+        "risk_score": 4.67,
+        "normalized_risk_score": 0.13
+    },
+    {
+        "barangay_name": "Panacan",
+        "risk_score": 4.45,
+        "normalized_risk_score": 0.12
+    },
+    {
+        "barangay_name": "Manuel Guianga",
+        "risk_score": 4.31,
+        "normalized_risk_score": 0.12
+    },
+    {
+        "barangay_name": "Eden",
+        "risk_score": 4.3,
+        "normalized_risk_score": 0.12
+    },
+    {
+        "barangay_name": "Alambre",
+        "risk_score": 4.17,
+        "normalized_risk_score": 0.11
+    },
+    {
+        "barangay_name": "Balengaeng",
+        "risk_score": 4.15,
+        "normalized_risk_score": 0.11
+    },
+    {
+        "barangay_name": "Tacunan",
+        "risk_score": 4.12,
+        "normalized_risk_score": 0.11
+    },
+    {
+        "barangay_name": "Salaysay",
+        "risk_score": 4.04,
+        "normalized_risk_score": 0.11
+    },
+    {
+        "barangay_name": "Malagos",
+        "risk_score": 4.01,
+        "normalized_risk_score": 0.11
+    },
+    {
+        "barangay_name": "Sasa",
+        "risk_score": 4.0,
+        "normalized_risk_score": 0.11
+    },
+    {
+        "barangay_name": "Tambobong",
+        "risk_score": 3.77,
+        "normalized_risk_score": 0.1
+    },
+    {
+        "barangay_name": "Bago Gallera",
+        "risk_score": 3.41,
+        "normalized_risk_score": 0.09
+    },
+    {
+        "barangay_name": "Callawa",
+        "risk_score": 3.28,
+        "normalized_risk_score": 0.09
+    },
+    {
+        "barangay_name": "Suawan",
+        "risk_score": 3.13,
+        "normalized_risk_score": 0.09
+    },
+    {
+        "barangay_name": "Buhangin",
+        "risk_score": 3.12,
+        "normalized_risk_score": 0.09
+    },
+    {
+        "barangay_name": "Lamanan",
+        "risk_score": 3.08,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Paradise Embak",
+        "risk_score": 3.08,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Waan",
+        "risk_score": 3.04,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Dominga",
+        "risk_score": 3.03,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Langub",
+        "risk_score": 2.97,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Tagurano",
+        "risk_score": 2.97,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Ma-a",
+        "risk_score": 2.91,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Magsaysay",
+        "risk_score": 2.86,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Tagakpan",
+        "risk_score": 2.77,
+        "normalized_risk_score": 0.08
+    },
+    {
+        "barangay_name": "Dumoy",
+        "risk_score": 2.73,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Cadalian",
+        "risk_score": 2.72,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Malabog",
+        "risk_score": 2.65,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Daliao",
+        "risk_score": 2.59,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Subasta",
+        "risk_score": 2.44,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Carmen",
+        "risk_score": 2.43,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Bago Aplaya",
+        "risk_score": 2.4,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "New Carmen",
+        "risk_score": 2.4,
+        "normalized_risk_score": 0.07
+    },
+    {
+        "barangay_name": "Catigan",
+        "risk_score": 2.36,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Talandang",
+        "risk_score": 2.28,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Camansi",
+        "risk_score": 2.26,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Baliok",
+        "risk_score": 2.25,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Manambulan",
+        "risk_score": 2.24,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Matina Aplaya",
+        "risk_score": 2.2,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Wangan",
+        "risk_score": 2.2,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Pampanga",
+        "risk_score": 2.16,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Daliaon Plantation",
+        "risk_score": 2.09,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Panalum",
+        "risk_score": 2.09,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Alfonso Angliongto Sr.",
+        "risk_score": 2.07,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Binugao",
+        "risk_score": 2.02,
+        "normalized_risk_score": 0.06
+    },
+    {
+        "barangay_name": "Sirawan",
+        "risk_score": 2.0,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Lubogan",
+        "risk_score": 1.92,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Crossing Bayabas",
+        "risk_score": 1.91,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Gumalang",
+        "risk_score": 1.89,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Bago Oshiro",
+        "risk_score": 1.88,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Biao Joaquin",
+        "risk_score": 1.88,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Bucana",
+        "risk_score": 1.86,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Cawayan",
+        "risk_score": 1.86,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Megkawayan",
+        "risk_score": 1.82,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Ula",
+        "risk_score": 1.8,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Mulig",
+        "risk_score": 1.79,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Fatima",
+        "risk_score": 1.74,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Mudiang",
+        "risk_score": 1.72,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Indangan",
+        "risk_score": 1.7,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "Tamayong",
+        "risk_score": 1.69,
+        "normalized_risk_score": 0.05
+    },
+    {
+        "barangay_name": "New Valencia",
+        "risk_score": 1.61,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Biao Escuela",
+        "risk_score": 1.6,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Communal",
+        "risk_score": 1.55,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Catalunan Grande",
+        "risk_score": 1.52,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Tibuloy",
+        "risk_score": 1.49,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Baguio",
+        "risk_score": 1.49,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Bato",
+        "risk_score": 1.4,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Tugbok",
+        "risk_score": 1.39,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "San Isidro",
+        "risk_score": 1.37,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Inayangan",
+        "risk_score": 1.36,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Baracatan",
+        "risk_score": 1.36,
+        "normalized_risk_score": 0.04
+    },
+    {
+        "barangay_name": "Tibungco",
+        "risk_score": 1.27,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Matina Pangi",
+        "risk_score": 1.26,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Mahayag",
+        "risk_score": 1.22,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Santo Ni\u00f1o",
+        "risk_score": 1.22,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Mabuhay",
+        "risk_score": 1.18,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Bangkas Heights",
+        "risk_score": 1.17,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Ilang",
+        "risk_score": 1.16,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Mintal",
+        "risk_score": 1.14,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Los Amigos",
+        "risk_score": 1.13,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Lapu-Lapu",
+        "risk_score": 1.06,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Paquibato",
+        "risk_score": 1.03,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Matina Biao",
+        "risk_score": 1.01,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Vicente Hizon Sr.",
+        "risk_score": 0.99,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Catalunan Peque\u00f1o",
+        "risk_score": 0.97,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Marapangi",
+        "risk_score": 0.97,
+        "normalized_risk_score": 0.03
+    },
+    {
+        "barangay_name": "Sumimao",
+        "risk_score": 0.89,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Acacia",
+        "risk_score": 0.89,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Cabantian",
+        "risk_score": 0.85,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Tungakalan",
+        "risk_score": 0.8,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Biao Guianga",
+        "risk_score": 0.76,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Kilate",
+        "risk_score": 0.76,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Gov. Paciano Bangoy",
+        "risk_score": 0.73,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Wilfredo Aquino",
+        "risk_score": 0.7,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "San Antonio",
+        "risk_score": 0.66,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Tagluno",
+        "risk_score": 0.65,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Rafael Castillo",
+        "risk_score": 0.61,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Bayabas",
+        "risk_score": 0.56,
+        "normalized_risk_score": 0.02
+    },
+    {
+        "barangay_name": "Gov. Vicente Duterte",
+        "risk_score": 0.49,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "Barangay 5-A",
+        "risk_score": 0.48,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "Agdao",
+        "risk_score": 0.36,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "Centro",
+        "risk_score": 0.35,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "\"Leon Garcia",
+        "risk_score": 0.3,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "Barangay 20-B",
+        "risk_score": 0.27,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "Barangay 19-B",
+        "risk_score": 0.22,
+        "normalized_risk_score": 0.01
+    },
+    {
+        "barangay_name": "Ubalde",
+        "risk_score": 0.13,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Kap. Tomas Monteverde Sr.",
+        "risk_score": 0.12,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 15-B",
+        "risk_score": 0.08,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 2-A",
+        "risk_score": 0.07,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 11-B",
+        "risk_score": 0.07,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 9-A",
+        "risk_score": 0.07,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 3-A",
+        "risk_score": 0.05,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 7-A",
+        "risk_score": 0.05,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 4-A",
+        "risk_score": 0.04,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 1-A",
+        "risk_score": 0.04,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 34-D",
+        "risk_score": 0.04,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 8-A",
+        "risk_score": 0.04,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 6-A",
+        "risk_score": 0.03,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 12-B",
+        "risk_score": 0.03,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 29-C",
+        "risk_score": 0.03,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 10-A",
+        "risk_score": 0.02,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 30-C",
+        "risk_score": 0.02,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 32-D",
+        "risk_score": 0.02,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 27-C",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 13-B",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 28-C",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 38-D",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 39-D",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 36-D",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 24-C",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 16-B",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 40-D",
+        "risk_score": 0.01,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 17-B",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 18-B",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 26-C",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 25-C",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 14-B",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 35-D",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 31-D",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 22-C",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 33-D",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 37-D",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 23-C",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    },
+    {
+        "barangay_name": "Barangay 21-C",
+        "risk_score": 0.0,
+        "normalized_risk_score": 0.0
+    }
+]
