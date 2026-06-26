@@ -26,3 +26,8 @@ class Statistics(BaseModel):
     report_type_freq: list[ReportTypeFreq]
     report_themes: list[Theme]
     barangay_stats: list[BarangayStatistics]
+
+class ReportDensity(BaseModel):
+    barangay_id: int
+    barangay_name: str
+    report_density_sq_m: float

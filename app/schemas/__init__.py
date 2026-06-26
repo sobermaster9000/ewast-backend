@@ -5,5 +5,5 @@ from .barangay import BarangayBase, Barangay, BarangayPublic, BarangayCreate, Ba
 from .assignment import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate
 from .announcements import AnnouncementBase, Announcement, AnnouncementPublic, AnnouncementCreate, AnnouncementFormFields
 from .summary import Theme, Summary, GeneralSummary, BarangaySummary
-from .statistics import ReportCount, ReportTypeFreq, BarangayStatistics, Statistics
+from .statistics import ReportCount, ReportTypeFreq, BarangayStatistics, Statistics, ReportDensity
 from .misc import Detail

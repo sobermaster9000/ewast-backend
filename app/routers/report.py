@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary, Theme, ReportTypeFreq, ReportCount
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary, Theme, ReportTypeFreq, ReportCount, ReportDensity
 from app.services.database import SessionDependency
 from app.services import auth
 from app.services import report_analysis
@@ -158,17 +158,17 @@ def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency)
 def get_count_report_stat() -> int:
     return report_analysis.get_report_count()
 
-@router.get("/reports/stats/density-rankings", response_model=None)
-def get_density_rankings_stat(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100):
+@router.get("/reports/stats/density-rankings", response_model=list[ReportDensity])
+def get_density_rankings_stat(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[ReportDensity]:
     barangays = session.exec(select(Barangay)).all()
     results = []
     for barangay in barangays:
-        results.append({
-            "barangay_id": barangay.barangay_id,
-            "barangay_name": barangay.name,
-            "report_density_sq_m": report_analysis.get_report_density(barangay.barangay_id)
-        })
-    return sorted(results, key=lambda x:x["report_density_sq_m"], reverse=True)[offset:offset+limit]
+        results.append(ReportDensity(
+            barangay_id=barangay.barangay_id,
+            barangay_name=barangay.name,
+            report_density_sq_m=report_analysis.get_report_density(barangay.barangay_id)
+        ))
+    return sorted(results, key=lambda x:x.report_density_sq_m, reverse=True)[offset:offset+limit]
 
 @router.get("/reports/stats/most-reports", response_model=list[ReportCount])
 def get_barangays_with_most_reports_stat() -> list[ReportCount]:
