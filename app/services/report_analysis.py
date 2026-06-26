@@ -252,6 +252,14 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
             report_image_bytes = file.read()
         data_format = os.path.splitext(report_image_url)[1][1:]
 
+    data_format = data_format.replace("jpg", "jpeg")
+    if data_format not in ("jpeg", "png"):
+        data_format = ""
+        logger.warning("Submitted image format is not supported for analysis")
+
+    if not report_notes and not data_format:
+        raise Exception("No report notes or image to proceed with analysis")
+
     if not report_notes:
        report_notes = ""
 
@@ -285,10 +293,10 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
         }
     ]
 
-    if report_image_bytes:
+    if report_image_bytes and data_format:
         messages[0]["content"].append({
             "image": {
-                "format": "jpeg",
+                "format": data_format,
                 "source": {
                     "bytes": report_image_bytes
                 }
