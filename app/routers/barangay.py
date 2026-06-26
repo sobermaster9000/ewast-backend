@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Query, HTTPException, status
 from typing import Annotated, Any
 
-from sqlmodel import select
+from sqlmodel import Session, select
 
-from app.schemas import BarangayBase, Barangay, BarangayPublic, BarangayCreate, Role, BarangayFloodRisk
+from app.schemas import BarangayBase, Barangay, BarangayPublic, BarangayCreate, Role, BarangayFloodRisk, BarangayWithGeoJSON, GeoJSON
 from app.services.database import SessionDependency
 from app.services import auth
 
@@ -12,6 +12,20 @@ import json
 def _load_risk_scores_data() -> list[dict[str, Any]]:
     with open("app/data/barangay_flood_risks.davao_city.json", 'r') as file:
         return json.loads(file.read())
+
+def _load_barangay_geojson(barangay_id: int, session: SessionDependency) -> GeoJSON:
+    barangay = session.get(Barangay, barangay_id)
+    if not barangay:
+        raise HTTPException(status_code=404, detail=f"Barangay with ID {barangay_id} not found")
+    filename = barangay.name.strip().lower().replace('ñ', 'n').replace('.', '').replace(',', '').replace(' ', '-') + ".json"
+    json_string = ""
+    try:
+        with open(f"app/data/barangays/{filename}", 'r') as file:
+            json_string = file.read()
+    except:
+        raise HTTPException(status_code=500, detail=f"Could not open or parse contents of {filename}")
+    geojson = GeoJSON.model_validate_json(json_string)
+    return geojson
 
 router = APIRouter()
 
@@ -56,6 +70,21 @@ def get_barangay_risk_scores(session: SessionDependency) -> list[BarangayFloodRi
 
     return results
 
+@router.get("/barangays/geojson", response_model=list[BarangayWithGeoJSON])
+def get_barangays_geojson(session: SessionDependency) -> list[BarangayWithGeoJSON]:
+    result = []
+    barangays = session.exec(select(Barangay)).all()
+    for barangay in barangays:
+        if not barangay:
+            continue
+        geojson = _load_barangay_geojson(barangay.barangay_id, session)
+        result.append(BarangayWithGeoJSON(
+            barangay_id=barangay.barangay_id,
+            barangay_name=barangay.name,
+            geojson=geojson
+        ))
+    return result
+
 @router.get("/barangays/{barangay_id}", response_model=BarangayPublic)
 def get_barangay(barangay_id: int, session: SessionDependency) -> BarangayPublic:
     barangay = session.get(Barangay, barangay_id)
@@ -91,4 +120,14 @@ def get_barangay_risk_score(barangay_id: int, session: SessionDependency) -> Bar
         normalized_flood_risk=data["normalized_risk_score"]
     )
 
+    return result
+
+@router.get("/barangays/geojson/{barangay_id}", response_model=BarangayWithGeoJSON)
+def get_barangay_geojson(barangay_id: int, session: SessionDependency) -> BarangayWithGeoJSON:
+    geojson = _load_barangay_geojson(barangay_id, session)
+    result = BarangayWithGeoJSON(
+        barangay_id=barangay_id,
+        barangay_name=geojson.properties.barangay_name,
+        geojson=geojson
+    )
     return result
