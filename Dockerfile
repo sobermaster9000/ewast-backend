@@ -33,7 +33,4 @@ COPY alembic.ini .
 ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT []
-
-# Step 9: The command to run your app inside Lambda via Uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
