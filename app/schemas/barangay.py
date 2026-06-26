@@ -1,4 +1,4 @@
-# from pydantic import BaseModel
+from pydantic import BaseModel
 
 from sqlmodel import SQLModel, Field
 from sqlalchemy import Column, JSON
@@ -25,3 +25,9 @@ class BarangayPublic(BarangayBase):
 # barangay class for instantiation with JSON input
 class BarangayCreate(BarangayBase):
     pass
+
+class BarangayFloodRisk(BaseModel):
+    barangay_id: int
+    barangay_name: str
+    flood_risk: float
+    normalized_flood_risk: float
