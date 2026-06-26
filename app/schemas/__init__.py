@@ -4,6 +4,7 @@ from .route import RouteBase, Route, RoutePublic, RouteCreate, Location, RouteTr
 from .barangay import BarangayBase, Barangay, BarangayPublic, BarangayCreate, BarangayFloodRisk, BarangayWithGeoJSON, GeoJSON
 from .assignment import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate
 from .announcements import AnnouncementBase, Announcement, AnnouncementPublic, AnnouncementCreate, AnnouncementFormFields
+from .notification import NotificationBase, Notification, NotificationPublic, NotificationCreate
 from .summary import Theme, Summary, GeneralSummary, BarangaySummary
 from .statistics import ReportCount, ReportTypeFreq, BarangayStatistics, Statistics, ReportDensity
 from .misc import Detail

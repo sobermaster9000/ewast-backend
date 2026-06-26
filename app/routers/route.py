@@ -9,6 +9,7 @@ from app.schemas import RouteBase, Route, RoutePublic, RouteCreate, RouteTripReq
 from app.schemas.route import RouteTripRequestBarangay, RouteEvaluation, RoutesEvaluation
 from app.services.database import SessionDependency
 from app.services import auth, routing
+from app.services.notifications import notify_citizens_route_approved
 from app.services.routing_eval_collect_rate import compute_collection_rates_for_barangay, compute_overall_collection_rate_for_barangay
 from app.services.routing_eval_fuel import get_estimated_route_efficiency, get_estimated_routes_efficiency_for_barangay
 
@@ -105,6 +106,7 @@ def approve_route(current_user: auth.CurrentUser, session: SessionDependency, ro
     route.sqlmodel_update(route_data)
     session.add(route)
     session.commit()
+    notify_citizens_route_approved(session=session, route_id=route.route_id)
     session.refresh(route)
     return route
 
