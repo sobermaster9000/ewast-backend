@@ -9,10 +9,6 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
 
-    OPENROUTER_MODEL: str
-    OPENROUTER_API_ENDPOINT: str
-    OPENROUTER_API_KEY: str
-
     AWS_BEARER_TOKEN_BEDROCK: str
 
     HASHING_ITERATIONS: int
