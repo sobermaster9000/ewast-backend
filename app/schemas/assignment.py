@@ -9,6 +9,7 @@ from sqlalchemy import Column, JSON
 class AssignmentBase(SQLModel):
     assigned_to_user_id: int # manually verify that this exists in `users` table
     route_id: int # manually verify that this exists in `routes` table
+    collection_date: datetime
 
 # standard assignment model to be stored in database
 class Assignment(AssignmentBase, table=True):
@@ -29,8 +30,8 @@ class AssignmentPublic(AssignmentBase):
     is_started: bool = Field(default=False)
     is_completed: bool = Field(default=False)
     date_assigned: datetime | None
-    deadline: datetime | None
     date_completed: datetime | None = Field(default=None)
+    deadline: datetime | None
     is_tracked_by_admin: bool = Field(default=False)
     current_truck_latlong: list[float] = Field(sa_column=Column(JSON, nullable=False, default=[0, 0]))
 

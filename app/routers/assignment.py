@@ -58,6 +58,17 @@ def get_assignments(session: SessionDependency, offset: int = 0, limit: Annotate
     assignments = session.exec(select(Assignment).offset(offset).limit(limit)).all()
     return assignments
 
+@router.get("/assignments/upcoming", response_model=list[AssignmentPublic])
+def get_upcoming_assignments(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[AssignmentPublic]:
+    assignments = session.exec(select(Assignment)).all()
+    results = []
+    for assignment in assignments:
+        if not assignment.collection_date:
+            continue
+        if assignment.collection_date > datetime.utcnow():
+            results.append(assignment)
+    return sorted(results, key=lambda x:x.date_assigned)[offset:offset+limit]
+
 @router.get("/assignments/{assignment_id}", response_model=AssignmentPublic)
 def get_assignment(assignment_id: int, session: SessionDependency) -> AssignmentPublic:
     assignment = session.get(Assignment, assignment_id)
@@ -78,7 +89,9 @@ def create_assignment(assignment_create: AssignmentCreate, current_user: auth.Cu
     assignment = Assignment(
         assigned_to_user_id=assignment_create.assigned_to_user_id,
         route_id=assignment_create.route_id,
-        date_assigned=datetime.utcnow()
+        collection_date=assignment_create.collection_date,
+        date_assigned=datetime.utcnow(),
+        current_truck_latlong=[0,0]
     )
     session.add(assignment)
     session.commit()
