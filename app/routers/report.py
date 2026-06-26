@@ -15,8 +15,8 @@ router = APIRouter()
 
 @router.get("/reports", response_model=list[ReportPublic])
 def get_reports(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[ReportPublic]:
-    reports = session.exec(select(Report).offset(offset).limit(limit)).all()
-    return reports
+    reports = session.exec(select(Report)).all()
+    return sorted(reports, key=lambda x:x.date_reported, reverse=True)[offset:offset+limit]
 
 @router.get("/reports/pending", response_model=list[ReportPublic])
 def get_pending_reports(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[ReportPublic]:
