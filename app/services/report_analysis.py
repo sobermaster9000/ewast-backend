@@ -130,7 +130,7 @@ def get_barangays_with_most_reports() -> list[ReportCount]:
     with Session(db_engine) as session:
         query = text("""SELECT b.name as barangay_name, COUNT(r.under_barangay_id) as count
             FROM reports r JOIN barangays b ON b.barangay_id = r.under_barangay_id
-            GROUP BY b.barangay_id, b.name ORDER BY count DESC LIMIT 10""")
+            GROUP BY b.barangay_id, b.name ORDER BY count DESC""")
         result = session.execute(query)
         rows = result.fetchall()
         report_counts = []

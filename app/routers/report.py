@@ -6,7 +6,7 @@ from typing import Annotated
 
 from sqlmodel import select
 
-from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary
+from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary, Theme, ReportTypeFreq, ReportCount
 from app.services.database import SessionDependency
 from app.services import auth
 from app.services import report_analysis
@@ -154,6 +154,34 @@ def get_report_stats(current_user: auth.CurrentUser, session: SessionDependency)
 
     return stats
 
+@router.get("/reports/stats/count", response_model=int)
+def get_count_report_stat() -> int:
+    return report_analysis.get_report_count()
+
+@router.get("/reports/stats/density-rankings", response_model=None)
+def get_density_rankings_stat(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100):
+    barangays = session.exec(select(Barangay)).all()
+    results = []
+    for barangay in barangays:
+        results.append({
+            "barangay_id": barangay.barangay_id,
+            "barangay_name": barangay.name,
+            "report_density_sq_m": report_analysis.get_report_density(barangay.barangay_id)
+        })
+    return sorted(results, key=lambda x:x["report_density_sq_m"], reverse=True)[offset:offset+limit]
+
+@router.get("/reports/stats/most-reports", response_model=list[ReportCount])
+def get_barangays_with_most_reports_stat() -> list[ReportCount]:
+    return sorted(report_analysis.get_barangays_with_most_reports(), key=lambda x:x.count, reverse=True)
+
+@router.get("/reports/stats/type-freq", response_model=list[ReportTypeFreq])
+def get_report_type_freq_stat() -> list[ReportTypeFreq]:
+    return report_analysis.get_report_type_freq()
+
+@router.get("/reports/stats/report-themes", response_model=list[Theme])
+def get_report_themes_stat() -> list[Theme]:
+    return report_analysis.get_report_themes()
+
 @router.get("/reports/geocode/reverse", response_model=dict[str, str])
 def get_address_from_coordinates(
     latitude: float = Query(..., ge=-90, le=90),
@@ -177,11 +205,11 @@ def get_report_address(report_id: int, session: SessionDependency) -> dict[str, 
     report = session.get(Report, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    
+
     # If address is already saved, return it
     if report.address:
         return {"address": report.address}
-    
+
     # Otherwise, resolve it now, save it, and return it
     from app.services.geocoding import reverse_geocode
     address = reverse_geocode(report.latitude, report.longitude)
@@ -192,12 +220,12 @@ def get_report_address(report_id: int, session: SessionDependency) -> dict[str, 
                 address = f"Barangay {barangay.name}, Philippines"
         if not address:
             address = "Unknown Address"
-            
+
     report.address = address
     session.add(report)
     session.commit()
     session.refresh(report)
-    
+
     return {"address": address}
 
 @router.get("/reports/user/{user_id}", response_model=list[ReportPublic])
