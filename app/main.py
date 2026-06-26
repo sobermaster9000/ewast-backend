@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import user_router, route_router, report_router, barangay_router, assignment_router
+from app.routers import user_router, route_router, report_router, barangay_router, assignment_router, notification_router
 from app.services import database
 from app.config import settings
 import os
@@ -31,6 +31,7 @@ app.include_router(route_router, prefix="/api", tags=["route"])
 app.include_router(report_router, prefix="/api", tags=["report"])
 app.include_router(barangay_router, prefix="/api", tags=["barangay"])
 app.include_router(assignment_router, prefix="/api", tags=["assignment"])
+app.include_router(notification_router, prefix="/api", tags=["notification"])
 
 @app.on_event("startup")
 def on_startup():

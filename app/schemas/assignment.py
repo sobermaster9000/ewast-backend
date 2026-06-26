@@ -18,6 +18,8 @@ class Assignment(AssignmentBase, table=True):
     is_completed: bool | None = Field(default=False)
     date_assigned: datetime | None = Field(default=None)
     date_completed: datetime | None = Field(default=None)
+    deadline: datetime | None = Field(default=None)
+    is_tracked_by_admin: bool | None = Field(default=False)
 
 # public assignment model to be returned in API calls
 class AssignmentPublic(AssignmentBase):
@@ -25,7 +27,9 @@ class AssignmentPublic(AssignmentBase):
     is_started: bool = Field(default=False)
     is_completed: bool = Field(default=False)
     date_assigned: datetime
+    deadline: datetime
     date_completed: datetime | None = Field(default=None)
+    is_tracked_by_admin: bool = Field(default=False)
 
 # assignment model for instantiation with JSON input
 class AssignmentCreate(AssignmentBase):
