@@ -5,7 +5,7 @@ from typing import Annotated
 
 from sqlmodel import select, Session
 
-from app.schemas import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate, Role
+from app.schemas import AssignmentBase, Assignment, AssignmentPublic, AssignmentCreate, Role, Location
 from app.services.database import SessionDependency, db_engine
 from app.services import auth, notifications
 
@@ -51,7 +51,7 @@ async def schedule_deadline_notification(assignment_id: int, notification_time: 
         except Exception as error:
             logger.error(f"Failed to send deadline email for assignment {assignment_id}: {error}")
 
-    
+
 
 @router.get("/assignments", response_model=list[AssignmentPublic])
 def get_assignments(session: SessionDependency, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100) -> list[AssignmentPublic]:
@@ -125,3 +125,21 @@ def complete_assignment(assignment_id: int, current_user: auth.CurrentUser, sess
     session.commit()
     session.refresh(assignment)
     return assignment
+
+@router.post("/assignments/truckloc/update/{assignment_id}", response_model=Location)
+def update_assignment_truck_location(assignment_id: int, location: Location, session: SessionDependency) -> Location:
+    assignment = session.get(Assignment, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail=f"Assignment with ID {assignment_id} not found")
+    assignment.current_truck_latlong = [location.latitude, location.longitude]
+    session.add(assignment)
+    session.commit()
+    session.refresh(assignment)
+    return Location(latitude=assignment.current_truck_latlong[0], longitude=assignment.current_truck_latlong[1])
+
+@router.get("/assignments/truckloc/{assignment_id}", response_model=Location)
+def get_assignment_truck_location(assignment_id: int, session: SessionDependency) -> Location:
+    assignment = session.get(Assignment, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail=f"Assignment with ID {assignment_id} not found")
+    return Location(latitude=assignment.current_truck_latlong[0], longitude=assignment.current_truck_latlong[1])
