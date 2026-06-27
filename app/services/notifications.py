@@ -114,10 +114,14 @@ def notify_citizens_route_approved(session: SessionDependency, route_id: int, ma
             continue
 
         heading_from_prior = any(prior_index < index for prior_index in collected_report_indices)
+        location_label = reverse_geocode(report.latitude, report.longitude)
+        if not location_label:
+            location_label = f"({report.latitude}, {report.longitude})"
+
         title = "Route approved near your reported trash"
         message = (
             f"A collector route has been approved near your reported trash at "
-            f"({report.latitude}, {report.longitude}). "
+            f"{location_label}. "
         )
         if heading_from_prior:
             message += "The collector is expected to approach your location from a prior collection point."
