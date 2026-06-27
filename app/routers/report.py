@@ -73,7 +73,10 @@ async def create_report(
 
     image_url = s3.upload_file(image, folder="images")
 
-    barangay_id = report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude)
+    raw_barangay_id = report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude)
+    # get_barangay_id_of_loc returns 0 when the point isn't inside any known barangay;
+    # normalise that sentinel to None so the nullable column stays clean.
+    barangay_id: int | None = raw_barangay_id if raw_barangay_id else None
 
     from app.services.geocoding import reverse_geocode
     address = reverse_geocode(form_data.latitude, form_data.longitude)

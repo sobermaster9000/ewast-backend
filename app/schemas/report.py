@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from enum import Enum
 
 from sqlmodel import SQLModel, Field
@@ -38,8 +38,8 @@ class Report(ReportBase, table=True):
     image_url: str | None = Field(default=None, max_length=1000)
     report_summary: str | None = Field(default=None)
     report_themes: list[dict[str, Any]] = Field(sa_column=Column(JSON, default=[]))
-    reported_by_user_id: int # manually verify that this exists in `users` table
-    under_barangay_id: int
+    reported_by_user_id: int  # manually verify that this exists in `users` table
+    under_barangay_id: int | None = Field(default=None)  # None when coords are outside all barangays
     is_collected: bool = Field(default=False)
     date_reported: datetime
 
@@ -49,8 +49,8 @@ class ReportPublic(ReportBase):
     image_url: str | None = Field(default=None, max_length=1000)
     report_summary: str | None = Field(default=None)
     report_themes: list[Theme]
-    reported_by_user_id: int # manually verify that this exists in `users` table
-    under_barangay_id: int
+    reported_by_user_id: int  # manually verify that this exists in `users` table
+    under_barangay_id: int | None = None  # None when coords are outside all barangays
     is_collected: bool = Field(default=False)
     date_reported: datetime
 
@@ -64,6 +64,32 @@ class ReportFormFields(BaseModel):
     notes: str | None = None
     latitude: float
     longitude: float
+
+    @field_validator('latitude', mode='before')
+    @classmethod
+    def validate_latitude(cls, v: Any) -> float:
+        """Reject null / non-numeric values with a clear error instead of the
+        generic Pydantic message, and clamp to the valid [-90, 90] range."""
+        try:
+            val = float(v)
+        except (TypeError, ValueError):
+            raise ValueError('latitude must be a numeric value, not null')
+        if not (-90 <= val <= 90):
+            raise ValueError('latitude must be between -90 and 90')
+        return val
+
+    @field_validator('longitude', mode='before')
+    @classmethod
+    def validate_longitude(cls, v: Any) -> float:
+        """Reject null / non-numeric values with a clear error instead of the
+        generic Pydantic message, and clamp to the valid [-180, 180] range."""
+        try:
+            val = float(v)
+        except (TypeError, ValueError):
+            raise ValueError('longitude must be a numeric value, not null')
+        if not (-180 <= val <= 180):
+            raise ValueError('longitude must be between -180 and 180')
+        return val
 
     # this class method allows FastAPI to parse fields from form-data sequentially
     @classmethod
