@@ -238,21 +238,27 @@ def get_barangay_id_of_loc(latitude: float, longitude: float) -> int:
 def analyze_garbage_report(report: Report) -> dict[str, Any]:
     report_type = report.type
     report_notes = report.notes
-    report_image_url = report.image_url
+    report_image_url = report.image_url if report.image_url else ""
 
-    if not report.notes and not report.image_url:
+    if not report_notes and not report_image_url:
         raise Exception("No report notes or image to proceed with analysis")
 
     # when using s3, remove byte reading and pass asset link directly
-    data_format = ""
-    report_image_bytes = b""
-    if report_image_url:
-        logging.info("Image url present, reading image...")
-        with open(report_image_url, "rb") as file:
-            report_image_bytes = file.read()
-        data_format = os.path.splitext(report_image_url)[1][1:]
+    # data_format = ""
+    # report_image_bytes = b""
+    # if report_image_url:
+    #     logging.info("Image url present, reading image...")
+    #     with open(report_image_url, "rb") as file:
+    #         report_image_bytes = file.read()
+    #     data_format = os.path.splitext(report_image_url)[1][1:]
 
-    data_format = data_format.replace("jpg", "jpeg")
+    data_format = ""
+
+    if report_image_url.endswith("png"):
+        data_format = "png"
+    if report_image_url.endswith("jpeg") or report_image_url.endswith("jpg"):
+        data_format = "jpeg"
+
     if data_format not in ("jpeg", "png"):
         data_format = ""
         logger.warning("Submitted image format is not supported for analysis")
@@ -293,12 +299,17 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
         }
     ]
 
-    if report_image_bytes and data_format:
+    if report_image_url and data_format:
         messages[0]["content"].append({
             "image": {
                 "format": data_format,
+                # "source": {
+                #     "bytes": report_image_bytes
+                # }
                 "source": {
-                    "bytes": report_image_bytes
+                    "s3Location": {
+                        "uri": report_image_url
+                    }
                 }
             }
         })
@@ -325,114 +336,6 @@ def analyze_garbage_report(report: Report) -> dict[str, Any]:
     analysis_json["barangay_id"] = barangay_id
 
     return analysis_json
-
-# def analyze_garbage_report(report: Report) -> dict[str, Any]:
-#     report_type = report.type
-#     report_notes = report.notes
-#     report_image_url = report.image_url
-#
-#     if report_notes is None and report_image_url is None:
-#         raise Exception("No report notes or image to proceed with analysis")
-#
-#     image_data_url = ""
-#     image_encoded_string = ""
-#
-#     if report_image_url:
-#         try:
-#             with open(report_image_url, "rb") as file:
-#                 image_encoded_string = base64.b64encode(file.read()).decode("utf-8")
-#             file_extension = os.path.splitext(report_image_url)[1][1:]
-#             image_data_url = f"data:image/{file_extension};base64,{image_encoded_string}"
-#             logger.info(f"Image encoded into url with .{file_extension} file extension and {len(image_encoded_string)} characters encoded")
-#         except:
-#             raise Exception(f"Failed to read image {report_image_url} for AI analysis")
-#
-#     if not report_notes:
-#         report_notes = ""
-#
-#     barangay_id = report.under_barangay_id
-#
-#     barangay_analysis = ""
-#     barangay_themes = []
-#     try:
-#         barangay_analysis = get_barangay_report_analysis(barangay_id)
-#         _barangay_themes = get_barangay_themes(barangay_id)
-#         for theme in _barangay_themes:
-#             barangay_themes.append(dict(theme))
-#     except Exception as error:
-#         logger.warning(f"Could not retrieve barangay analysis of barangay with id {barangay_id}\nError: {error}")
-#
-#     overall_analysis = ""
-#     overall_themes = []
-#     try:
-#         overall_analysis = get_general_report_analysis()
-#         _overall_themes = get_general_themes()
-#         for theme in _overall_themes:
-#             overall_themes.append(dict(theme))
-#     except Exception as error:
-#         logger.warning(f"Could not retrieve overall reports analysis\nError: {error}")
-#
-#     prompt = PROMPT_TEMPLATE.format(
-#         report_type=report_type.value,
-#         report_notes=report_notes,
-#         barangay_analysis=barangay_analysis,
-#         barangay_themes=barangay_themes,
-#         overall_analysis=overall_analysis,
-#         overall_themes=overall_themes
-#     )
-#
-#     payload = {
-#         "model": settings.OPENROUTER_MODEL,
-#         "messages": [
-#             {
-#                 "role": "user",
-#                 "content": [
-#                     {
-#                         "type": "text",
-#                         "text": prompt
-#                     }
-#                 ]
-#             }
-#         ]
-#     }
-#
-#     if image_data_url:
-#         payload["messages"][0]["content"].append({
-#             "type": "image_url",
-#             "image_url": {
-#                 "url": image_data_url
-#             }
-#         })
-#         logger.info("Image data url is present, appending to payload...")
-#
-#     response = requests.post(
-#         url=settings.OPENROUTER_API_ENDPOINT,
-#         headers={
-#             "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
-#             "Content-Type": "application/json"
-#         },
-#         data=json.dumps(payload)
-#     )
-#
-#     if response.status_code != 200:
-#         raise Exception(f"OpenRouter gateway error: {response.text}")
-#
-#     result = response.json()
-#     # logger.info(f"AI response: {result}")
-#     analysis_json_str = result["choices"][0]["message"]["content"]
-#     logger.info(f"AI raw JSON string response: {analysis_json_str}")
-#
-#     analysis = dict()
-#
-#     try:
-#         clean_json_string = analysis_json_str.replace("```json", "").replace("```", "").strip()
-#         analysis = json.loads(clean_json_string)
-#     except:
-#         raise Exception("Could not parse AI report analysis")
-#
-#     analysis["barangay_id"] = barangay_id
-#
-#     return analysis
 
 # this function calls the previous function and is designed to be
 # run as a backgorund task in order to be non-blocking for report uploads
