@@ -64,7 +64,11 @@ def signup_user(user_create: UserCreate, session: SessionDependency) -> UserPubl
 def login_user(user_login: UserLogin, session: SessionDependency) -> UserToken:
     user_login = UserLogin.model_validate(user_login)
     token = auth.get_token_from_credentials(user_login.email, user_login.password, session)
-    return UserToken(access_token=token)
+    user = session.exec(select(User).where(User.email == user_login.email)).first()
+    user_role = Role.CITIZEN
+    if user:
+        user_role = user.role
+    return UserToken(access_token=token, user_role=user_role)
 
 # frontend must also delete stored token
 @router.post("/users/logout", response_model=Detail)
