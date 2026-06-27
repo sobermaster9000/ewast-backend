@@ -11,8 +11,8 @@ class Settings(BaseSettings):
 
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
-    AWS_REGION: str
-    S3_BUCKET_NAME: str
+    AWS_REGION: str = "ap-southeast-1"
+    S3_BUCKET_NAME: str = "ewast-bucket-310957091940-ap-southeast-1-an"
     S3_BASE_URL: str
 
     AWS_BEARER_TOKEN_BEDROCK: str
