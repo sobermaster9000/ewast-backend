@@ -9,7 +9,7 @@ from sqlmodel import select
 from app.schemas import ReportType, ReportBase, Report, ReportPublic, ReportCreate, ReportFormFields, Role, Barangay, BarangayStatistics, Statistics, GeneralSummary, BarangaySummary, Theme, ReportTypeFreq, ReportCount, ReportDensity, ReportLocation
 from app.services.database import SessionDependency
 from app.services import auth
-from app.services import report_analysis
+from app.services import report_analysis, s3
 
 router = APIRouter()
 
@@ -55,21 +55,23 @@ async def create_report(
         raise HTTPException(status_code=500, detail="An error occured while trying to get user ID")
 
     # change to storage server in production
-    upload_dir = "static/uploads"
-    os.makedirs(upload_dir, exist_ok=True)
+    # upload_dir = "static/uploads"
+    # os.makedirs(upload_dir, exist_ok=True)
 
-    file_extension = os.path.splitext(image.filename)[1]
-    unique_filename = f"{int(datetime.utcnow().timestamp())}{file_extension}"
-    file_path = os.path.join(upload_dir, unique_filename)
+    # file_extension = os.path.splitext(image.filename)[1]
+    # unique_filename = f"{int(datetime.utcnow().timestamp())}{file_extension}"
+    # file_path = os.path.join(upload_dir, unique_filename)
 
-    try:
-        contents = await image.read()
-        with open(file_path, "wb") as f:
-            f.write(contents)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
-    finally:
-        await image.close()
+    # try:
+    #     contents = await image.read()
+    #     with open(file_path, "wb") as f:
+    #         f.write(contents)
+    # except Exception:
+    #     raise HTTPException(status_code=500, detail="Failed to save uplaoded image")
+    # finally:
+    #     await image.close()
+
+    image_url = s3.upload_file(image, folder="images")
 
     barangay_id = report_analysis.get_barangay_id_of_loc(form_data.latitude, form_data.longitude)
 
@@ -92,7 +94,8 @@ async def create_report(
         report_themes=[],
         reported_by_user_id=reported_by_user_id,
         under_barangay_id=barangay_id,
-        image_url=f"static/uploads/{unique_filename}",
+        # image_url=f"static/uploads/{unique_filename}",
+        image_url=image_url,
         is_collected=False,
         date_reported=datetime.utcnow()
     )
